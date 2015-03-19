@@ -1,10 +1,13 @@
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Properties;
 
 import twitter4j.FilterQuery;
@@ -14,32 +17,35 @@ import twitter4j.StatusDeletionNotice;
 import twitter4j.StatusListener;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
+import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 
 public class TcorsTwitterStream {
 	
+	String fileName = "keywords.txt";
+	
+	
 	public static void main(String[] args) throws IOException {
-		System.out.println("Hello TwitterParser!");
-		new TcorsTwitterStream().searchStream();
+		System.out.println("Hello TcorsTwitterStream!");
+		
+		TcorsTwitterStream tts = new TcorsTwitterStream();
+		Connection conn = null;
+		try {
+			conn = tts.getDBConn();
+			tts.searchStream(conn);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 	
-	public void searchStream() {
+	public void searchStream(final Connection conn) throws IOException {
 		TwitterStream twitterStream = getStreamInstance();
 		StatusListener listener = new StatusListener() {
-			int tweetCount = 0;
 			
 			public void onStatus(Status status) {
-				
-				storeTweet(status);
-				
-//				if (tweetCount < 10) {
-//					System.out.println("\n\n" + tweetCount + ": @" + status.getUser().getScreenName() + " - " + status.getText() + "\n\n");
-//					storeTweet(status);
-//					tweetCount++;
-//				} else {
-//					System.exit(0);
-//				}
-				
+				storeTwitterData(conn, status);
 			}
 
 			@Override
@@ -73,17 +79,63 @@ public class TcorsTwitterStream {
 			}
 		};
 		
+		String keywords[] = loadSearchTerms();
+		
 		FilterQuery filter = new FilterQuery();
-		String keyword[] = {"e-cig", "ecig"};
-		filter.track(keyword);
+		
+		filter.track(keywords);
 		
 		twitterStream.addListener(listener);
 		twitterStream.filter(filter);
 	}
 	
-	private void storeTweet(Status status) {
-		Connection conn = getDBConn();
-		String sql = "INSERT INTO tweets (id, createdAt, text, username, isRetweet)" +
+	private String[] loadSearchTerms() throws IOException {
+		ArrayList<String> ret = new ArrayList<String>();
+		
+		InputStream is = ClassLoader.getSystemResourceAsStream(fileName);
+		BufferedReader file = new BufferedReader(new InputStreamReader(is));
+		String line = null;
+		while ((line = file.readLine()) != null) {
+			ret.add(line);
+		}
+		file.close();
+		
+		return ret.toArray(new String[ret.size()]);
+	}
+
+	private void storeTwitterData(Connection conn, Status status) {
+		storeTweetData(conn, status);
+		storeUserData(conn, status);
+	}
+	
+	private void storeUserData(Connection conn, Status status) {
+		String sql = "REPLACE INTO profiles(userId, description, friendsCount, followersCount, screenName, statusesCount, location, name)" +
+				"VALUES (?,?,?,?,?,?,?,?)";
+		PreparedStatement ps = null; 
+		try {
+			ps = conn.prepareStatement(sql);
+			
+			User u = status.getUser();
+			ps.setString(1, String.valueOf(u.getId()));
+			ps.setString(2, u.getDescription());
+			ps.setInt(3, u.getFriendsCount());
+			ps.setInt(4, u.getFollowersCount());
+			ps.setString(5, u.getScreenName());
+			ps.setInt(6, u.getStatusesCount());
+			ps.setString(7, u.getLocation());
+			ps.setString(8, u.getName());
+			
+			ps.execute();
+			System.out.println("Stored profile " + u.getScreenName());
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private void storeTweetData(Connection conn, Status status) {
+		String sql = "INSERT INTO tweets (id, createdAt, text, userId, isRetweet)" +
 				"VALUES (?,?,?,?,?)";
 		PreparedStatement ps = null;
 		
@@ -92,7 +144,7 @@ public class TcorsTwitterStream {
 			ps.setString(1, Long.toString(status.getId()));
 			ps.setTimestamp(2, new Timestamp(status.getCreatedAt().getTime()));
 			ps.setString(3, status.getText());
-			ps.setString(4, status.getUser().getName());
+			ps.setString(4, String.valueOf(status.getUser().getId()));
 			ps.setBoolean(5, status.isRetweet());
 			
 			ps.execute();
@@ -115,24 +167,22 @@ public class TcorsTwitterStream {
 		return prop;
 	}
 	
-	private Connection getDBConn() {
+	private Connection getDBConn() throws SQLException {
+		System.out.println("Creating a DB connection...");
 		Connection conn = null;
 		Properties prop = getDBConf();
-		
+
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
-			String url = prop.getProperty("url");
-			String user = prop.getProperty("user");
-			String password = prop.getProperty("password");
-			
-			conn = DriverManager.getConnection(url,user,password);
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+		String url = prop.getProperty("url");
+		String user = prop.getProperty("user");
+		String password = prop.getProperty("password");
+			
+		conn = DriverManager.getConnection(url,user,password);
 		return conn;
 	}
 	

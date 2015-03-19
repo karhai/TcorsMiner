@@ -1,2 +1,1 @@
-# TcorsTwitter
-# Testing pipe to github
+Generic utility to parse Twitter Streaming API
