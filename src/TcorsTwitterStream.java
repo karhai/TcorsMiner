@@ -24,7 +24,6 @@ public class TcorsTwitterStream {
 	
 	String fileName = "keywords.txt";
 	
-	
 	public static void main(String[] args) throws IOException {
 		System.out.println("Hello TcorsTwitterStream!");
 		
@@ -104,11 +103,15 @@ public class TcorsTwitterStream {
 	}
 
 	private void storeTwitterData(Connection conn, Status status) {
-		storeTweetData(conn, status);
-		storeUserData(conn, status);
+		try {
+			storeTweetData(conn, status);
+			storeUserData(conn, status);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
-	private void storeUserData(Connection conn, Status status) {
+	private void storeUserData(Connection conn, Status status) throws SQLException {
 		String sql = "REPLACE INTO profiles(userId, description, friendsCount, followersCount, screenName, statusesCount, location, name)" +
 				"VALUES (?,?,?,?,?,?,?,?)";
 		PreparedStatement ps = null; 
@@ -131,10 +134,12 @@ public class TcorsTwitterStream {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			ps.close();
 		}
 	}
 	
-	private void storeTweetData(Connection conn, Status status) {
+	private void storeTweetData(Connection conn, Status status) throws SQLException {
 		String sql = "INSERT INTO tweets (id, createdAt, text, userId, isRetweet)" +
 				"VALUES (?,?,?,?,?)";
 		PreparedStatement ps = null;
@@ -153,6 +158,8 @@ public class TcorsTwitterStream {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			ps.close();
 		}
 	}
 	
