@@ -20,6 +20,17 @@ import twitter4j.TwitterStreamFactory;
 import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 
+/*
+ * command line execution: java
+ * 							-XX:+HeapDumpOnOutOfMemoryError 
+ * 							-Xms512m -Xmx1024m 
+ * 							-cp ./lib/*:./bin TcorsTwitterStream; 
+ * 							echo "process completed" | 
+ * 							mail -s "process completed" mail@email.com
+ * 
+ * jar file execution: java -jar TcorsTwitterStream.jar
+ */
+
 public class TcorsTwitterStream {
 	
 	String fileName = "keywords.txt";
@@ -112,7 +123,7 @@ public class TcorsTwitterStream {
 	}
 	
 	private void storeUserData(Connection conn, Status status) throws SQLException {
-		String sql = "REPLACE INTO profiles(userId, description, friendsCount, followersCount, screenName, statusesCount, location, name)" +
+		String sql = "REPLACE INTO twitter_profiles(userId, description, friendsCount, followersCount, screenName, statusesCount, location, name)" +
 				"VALUES (?,?,?,?,?,?,?,?)";
 		PreparedStatement ps = null; 
 		try {
