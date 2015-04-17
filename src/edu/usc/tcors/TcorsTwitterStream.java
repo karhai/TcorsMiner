@@ -212,6 +212,10 @@ public class TcorsTwitterStream {
 		return twitterStream;
 	}
 	
+	/*
+	 * TODO: refactor
+	 */
+	
 	private ConfigurationBuilder getConf() {
 		Properties prop = new Properties();
 		try {
