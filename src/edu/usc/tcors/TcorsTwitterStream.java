@@ -48,7 +48,6 @@ public class TcorsTwitterStream {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}
 	
 	public void searchStream(final Connection conn) throws IOException {
