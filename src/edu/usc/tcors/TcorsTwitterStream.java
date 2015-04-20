@@ -106,7 +106,9 @@ public class TcorsTwitterStream {
 		BufferedReader file = new BufferedReader(new InputStreamReader(is));
 		String line = null;
 		while ((line = file.readLine()) != null) {
-			ret.add(line);
+			if (!line.startsWith("#")) {
+				ret.add(line);
+			}
 		}
 		file.close();
 		
@@ -174,6 +176,10 @@ public class TcorsTwitterStream {
 		}
 	}
 	
+	/*
+	 * TODO: refactor
+	 */
+	
 	private Properties getDBConf() {
 		Properties prop = new Properties();
 		try {
@@ -184,6 +190,10 @@ public class TcorsTwitterStream {
 		}
 		return prop;
 	}
+	
+	/*
+	 * TODO: refactor
+	 */
 	
 	private Connection getDBConn() throws SQLException {
 		System.out.println("Creating a DB connection...");
@@ -203,6 +213,10 @@ public class TcorsTwitterStream {
 		conn = DriverManager.getConnection(url,user,password);
 		return conn;
 	}
+	
+	/*
+	 * TODO: refactor
+	 */
 	
 	private TwitterStream getStreamInstance() {
 		ConfigurationBuilder twitterConf = getConf();
