@@ -7,10 +7,12 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Properties;
 
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 
+import twitter4j.Paging;
 import twitter4j.Query;
 import twitter4j.QueryResult;
 import twitter4j.Status;
@@ -30,14 +32,42 @@ public class TcorsTwitterUtils {
 		// missing 4/17 data, from 589011127519948800L to 589100941686743042L
 		// new TcorsTwitterUtils().search("vaping", 589011127519948800L, 589100941686743042L);
 		
+		// missing 5/14 data, from 598795797405126657L to 598983856839139330L
+		
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Connection conn  = null;
 		try {
 			conn = u.getDBConn();
-			u.search("notblowingsmoke", 0, 0, conn);
+			// maxId = 598983856839139330L 
+			u.search("notareplacement", 598795797405126657L, 598983856839139330L, conn);
+			// u.getUserHistoricalTweets(2337766219L, conn);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void getUserHistoricalTweets(long id, Connection conn) throws SQLException {
+		Twitter twitter = getInstance();
+		Paging paging = new Paging(1,200);
+		paging.setCount(1000);
+		// paging.setMaxId(587170184189710336L);
+		// paging.setSinceId(587170184189710336L);
+		
+		List<Status> statuses = null;
+		try {
+			statuses = twitter.getUserTimeline(id, paging);
+		} catch (TwitterException e) {
+			e.printStackTrace();
+		}
+		
+		for (Status status : statuses) {
+			storeTweetData(conn, status);
+		}
+		
+	}
+	
+	private void getManyUsersHistoricalTweets() {
+		
 	}
 	
 	private void search(String searchTerm, long sinceId, long maxId, final Connection conn) throws SQLException {
@@ -71,7 +101,7 @@ public class TcorsTwitterUtils {
 		}
 		System.out.println("i total:" + i);
 		
-		if (i == 100 && result.getRateLimitStatus().getRemaining() > 100) {
+		if (i == 100 && result.getRateLimitStatus().getRemaining() > 1) {
 			System.out.println("more needed");
 			search(searchTerm, sinceId, newMaxId, conn);
 		}
