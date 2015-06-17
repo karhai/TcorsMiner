@@ -34,12 +34,14 @@ public class TcorsTwitterUtils {
 		
 		// missing 5/14 data, from 598795797405126657L to 598983856839139330L
 		
+		// missing 6/10-6/12, from 608579636574851074L to 609485130428743680L
+		
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Connection conn  = null;
 		try {
 			conn = u.getDBConn();
-			// maxId = 598983856839139330L 
-			u.search("notareplacement", 598795797405126657L, 598983856839139330L, conn);
+			// maxId = 609485130428743680L
+			u.search("sb 24", 608579636574851074L, 609485130428743680L, conn);
 			// u.getUserHistoricalTweets(2337766219L, conn);
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -100,6 +102,7 @@ public class TcorsTwitterUtils {
 			i++;
 		}
 		System.out.println("i total:" + i);
+		System.out.println("term:" + searchTerm);
 		
 		if (i == 100 && result.getRateLimitStatus().getRemaining() > 1) {
 			System.out.println("more needed");
