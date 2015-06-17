@@ -49,7 +49,7 @@ public class TcorsGnipParser {
 	
 	public static void readJSON() throws JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		GnipObj go = mapper.readValue(new File("/Users/karhai/tmp/json/file0.json"), GnipObj.class);
+		GnipObj go = mapper.readValue(new File("tmp/test.json"), GnipObj.class);
 	}
 	
 }
