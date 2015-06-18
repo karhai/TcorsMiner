@@ -9,6 +9,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +23,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import edu.usc.tcors.utils.TcorsTwitterUtils;
+
 public class TcorsGnipParser {
 
 	public static void main (String args[]) {
@@ -27,8 +32,10 @@ public class TcorsGnipParser {
 //		 final File folder = new File("/Users/karhai/tmp/json");
 //		 listFilesForFolder(folder);
 		
+		List<GnipObj> gnipObjs = null;
+		
 		try {
-			readJSON();
+			gnipObjs = readJSON();
 		} catch (JsonParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -38,6 +45,34 @@ public class TcorsGnipParser {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		try {
+			storeDB(gnipObjs);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public static void storeDB(List<GnipObj> gnipObjs) throws SQLException {
+		Connection conn = null;
+		TcorsTwitterUtils u = new TcorsTwitterUtils();
+		try {
+			conn = u.getDBConn();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		String sql = "";
+		PreparedStatement ps = null;
+		try {
+			ps = conn.prepareStatement(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ps.close();
 		}
 	}
 	
@@ -88,10 +123,11 @@ public class TcorsGnipParser {
 		br.close();
 	}
 	
-	public static void readJSON() throws JsonParseException, JsonMappingException, IOException {
+	public static List<GnipObj> readJSON() throws JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		List<GnipObj> gnipObjs = mapper.readValue(new File("tmp/test2-corrected.json"), new TypeReference<List<GnipObj>>(){});
 		System.out.println(gnipObjs.size());
+		return gnipObjs;
 	}
 	
 }

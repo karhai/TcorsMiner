@@ -202,7 +202,7 @@ public class TcorsTwitterUtils {
 		return prop;
 	}
 	
-	private Connection getDBConn() throws SQLException {
+	public Connection getDBConn() throws SQLException {
 		System.out.println("Creating a DB connection...");
 		Connection conn = null;
 		Properties prop = getDBConf();
