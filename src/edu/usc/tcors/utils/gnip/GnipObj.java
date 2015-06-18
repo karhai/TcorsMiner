@@ -15,6 +15,7 @@ public class GnipObj {
 	private Provider provider;
 	private String body;
 	private GnipObj object;
+	private InReplyTo inReplyTo;
 	private int favoritesCount;
 	private TwitterEntities twitter_entities;
 	private String twitter_filter_level;
@@ -23,6 +24,7 @@ public class GnipObj {
 	private Gnip gnip;
 	private int klout_score;
 	private String language;
+	private Info info;
 	
 	// note
 	private String summary;
@@ -129,6 +131,30 @@ public class GnipObj {
 	}
 	public void setSummary(String summary) {
 		this.summary = summary;
+	}
+	public InReplyTo getInReplyTo() {
+		return inReplyTo;
+	}
+	public void setInReplyTo(InReplyTo inReplyTo) {
+		this.inReplyTo = inReplyTo;
+	}
+	public int getKlout_score() {
+		return klout_score;
+	}
+	public void setKlout_score(int klout_score) {
+		this.klout_score = klout_score;
+	}
+	public String getLanguage() {
+		return language;
+	}
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+	public Info getInfo() {
+		return info;
+	}
+	public void setInfo(Info info) {
+		this.info = info;
 	}
 
 	

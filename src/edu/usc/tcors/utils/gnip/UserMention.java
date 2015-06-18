@@ -4,8 +4,8 @@ public class UserMention {
 
 	private String screen_name;
 	private String name;
-	private int id;
-	private int id_str;
+	private String id;
+	private String id_str;
 	private int[] indices;
 	
 	public String getScreen_name() {
@@ -20,16 +20,16 @@ public class UserMention {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public int getId() {
+	public String getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
-	public int getId_str() {
+	public String getId_str() {
 		return id_str;
 	}
-	public void setId_str(int id_str) {
+	public void setId_str(String id_str) {
 		this.id_str = id_str;
 	}
 	public int[] getIndices() {

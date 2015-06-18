@@ -1,6 +1,5 @@
 package edu.usc.tcors.utils.gnip;
 
-import java.sql.Date;
 import java.util.List;
 
 public class Actor {
