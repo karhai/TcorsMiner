@@ -7,6 +7,7 @@ public class GnipObj {
 	
 	private String postedTime;
 	private String link;
+	private Geo geo;
 	
 	// activity
 	private Actor actor;
@@ -18,12 +19,14 @@ public class GnipObj {
 	private InReplyTo inReplyTo;
 	private int favoritesCount;
 	private TwitterEntities twitter_entities;
+	private TwitterExtendedEntities twitter_extended_entities;
 	private String twitter_filter_level;
 	private String twitter_lang;
 	private int retweetCount;
 	private Gnip gnip;
 	private int klout_score;
 	private String language;
+	private Location location;
 	private Info info;
 	
 	// note
@@ -155,6 +158,25 @@ public class GnipObj {
 	}
 	public void setInfo(Info info) {
 		this.info = info;
+	}
+	public TwitterExtendedEntities getTwitter_extended_entities() {
+		return twitter_extended_entities;
+	}
+	public void setTwitter_extended_entities(
+			TwitterExtendedEntities twitter_extended_entities) {
+		this.twitter_extended_entities = twitter_extended_entities;
+	}
+	public Location getLocation() {
+		return location;
+	}
+	public void setLocation(Location location) {
+		this.location = location;
+	}
+	public Geo getGeo() {
+		return geo;
+	}
+	public void setGeo(Geo geo) {
+		this.geo = geo;
 	}
 
 	

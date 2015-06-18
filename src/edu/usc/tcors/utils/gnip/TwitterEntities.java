@@ -6,9 +6,10 @@ public class TwitterEntities {
 
 	private List<Hashtag> hashtags;
 	private List<String> trends;
-	private List<String> urls;
+	private List<Url> urls;
 	private List<UserMention> user_mentions;
-	private List<String> symbols;
+	private List<Symbol> symbols;
+	private List<Media> media;
 	
 	public List<Hashtag> getHashtags() {
 		return hashtags;
@@ -22,10 +23,10 @@ public class TwitterEntities {
 	public void setTrends(List<String> trends) {
 		this.trends = trends;
 	}
-	public List<String> getUrls() {
+	public List<Url> getUrls() {
 		return urls;
 	}
-	public void setUrls(List<String> urls) {
+	public void setUrls(List<Url> urls) {
 		this.urls = urls;
 	}
 	public List<UserMention> getUser_mentions() {
@@ -34,10 +35,16 @@ public class TwitterEntities {
 	public void setUser_mentions(List<UserMention> user_mentions) {
 		this.user_mentions = user_mentions;
 	}
-	public List<String> getSymbols() {
+	public List<Symbol> getSymbols() {
 		return symbols;
 	}
-	public void setSymbols(List<String> symbols) {
+	public void setSymbols(List<Symbol> symbols) {
 		this.symbols = symbols;
+	}
+	public List<Media> getMedia() {
+		return media;
+	}
+	public void setMedia(List<Media> media) {
+		this.media = media;
 	}
 }

@@ -29,13 +29,19 @@ public class TcorsGnipParser {
 
 	public static void main (String args[]) {
 	
-//		 final File folder = new File("/Users/karhai/tmp/json");
-//		 listFilesForFolder(folder);
+		/*
+		 * process raw gnip files
+		 */
+//		final File folder = new File("/Users/karhai/tmp/json");
+//		listFilesForFolder(folder);
 		
-		List<GnipObj> gnipObjs = null;
-		
+		/*
+		 * process and store clean gnip files
+		 */
 		try {
-			gnipObjs = readJSON();
+			// readJSON("/Users/karhai/tmp/json/corrected/corrected_file1.json");
+			final File folder = new File("/Users/karhai/tmp/json/corrected");
+			readMultiJSON(folder);
 		} catch (JsonParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -45,34 +51,69 @@ public class TcorsGnipParser {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		
-		try {
-			storeDB(gnipObjs);
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
+		System.out.println("Pau!");
+		
+	}
+	
+	public static void readMultiJSON(final File folder) throws JsonParseException, JsonMappingException, IOException, SQLException {
+
+		List<GnipObj> gnipObjs = null;
+		String file_fullpath;
+		
+		for (final File fileEntry : folder.listFiles()) {
+			if (fileEntry.isDirectory()) {
+				listFilesForFolder(fileEntry);
+			} else {
+				if (fileEntry.getName().startsWith(".")) {
+					// do nothing
+				} else {
+					file_fullpath = folder.getPath() + "/" + fileEntry.getName();
+					gnipObjs = readJSON(file_fullpath);
+					storeDB(gnipObjs);
+					System.out.println("Finished:" + file_fullpath);
+				}
+			}
+		}
 	}
 	
 	public static void storeDB(List<GnipObj> gnipObjs) throws SQLException {
 		Connection conn = null;
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
+		
 		try {
-			conn = u.getDBConn();
+			conn = u.getDBConn("gnip_configuration.properties");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
-		String sql = "";
+		String sql = "INSERT IGNORE INTO GnipObj (id,body) " +
+				"VALUES (?,?)";
 		PreparedStatement ps = null;
-		try {
-			ps = conn.prepareStatement(sql);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			ps.close();
+		
+		for (GnipObj g : gnipObjs) {
+		
+			if (g.getId() != null) {
+			
+				String id = g.getId();
+				String body = g.getBody();
+				
+				try {
+					ps = conn.prepareStatement(sql);
+					
+					ps.setString(1, id);
+					ps.setString(2, body);
+					
+					ps.execute();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				} finally {
+					ps.close();
+				}
+			}
 		}
 	}
 	
@@ -104,15 +145,13 @@ public class TcorsGnipParser {
 		int previous = 1;
 		while ((line = br.readLine()) != null) {
 			if (line.isEmpty()) {
-				if (previous == 1) {
-					// do nothing
-				} else {
-					out.write(",");
-					previous = 1;
-				}
+				// do nothing
 			} else {
-				out.write(line);
-				previous = 0;
+				if (line.startsWith("{\"info\"")) {
+					out.write(line);
+				} else {
+					out.write(line + ",");
+				}
 			}
 		}
 		out.write("]");
@@ -123,10 +162,10 @@ public class TcorsGnipParser {
 		br.close();
 	}
 	
-	public static List<GnipObj> readJSON() throws JsonParseException, JsonMappingException, IOException {
+	public static List<GnipObj> readJSON(String filename) throws JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		List<GnipObj> gnipObjs = mapper.readValue(new File("tmp/test2-corrected.json"), new TypeReference<List<GnipObj>>(){});
-		System.out.println(gnipObjs.size());
+		List<GnipObj> gnipObjs = mapper.readValue(new File(filename), new TypeReference<List<GnipObj>>(){});
+		// System.out.println(gnipObjs.size());
 		return gnipObjs;
 	}
 	

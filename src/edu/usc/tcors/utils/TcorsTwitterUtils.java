@@ -39,7 +39,7 @@ public class TcorsTwitterUtils {
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Connection conn  = null;
 		try {
-			conn = u.getDBConn();
+			conn = u.getDBConn("configuration.properties");
 			// maxId = 609485130428743680L
 			u.search("sb 24", 608579636574851074L, 609485130428743680L, conn);
 			// u.getUserHistoricalTweets(2337766219L, conn);
@@ -191,10 +191,10 @@ public class TcorsTwitterUtils {
 		}
 	}
 	
-	private Properties getDBConf() {
+	private Properties getDBConf(String filename) {
 		Properties prop = new Properties();
 		try {
-			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream("configuration.properties");
+			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream(filename);
 			prop.load(in);
 		} catch (IOException e) {
 			// log.error(e.toString());
@@ -202,10 +202,10 @@ public class TcorsTwitterUtils {
 		return prop;
 	}
 	
-	public Connection getDBConn() throws SQLException {
+	public Connection getDBConn(String filename) throws SQLException {
 		System.out.println("Creating a DB connection...");
 		Connection conn = null;
-		Properties prop = getDBConf();
+		Properties prop = getDBConf(filename);
 
 		try {
 			Class.forName("com.mysql.jdbc.Driver");

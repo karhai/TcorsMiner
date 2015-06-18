@@ -7,6 +7,7 @@ public class Gnip {
 	private List<MatchingRule> matching_rules;
 	private int klout_score;
 	private Language language;
+	private List<Url> urls;
 
 	public List<MatchingRule> getMatching_rules() {
 		return matching_rules;
@@ -27,5 +28,12 @@ public class Gnip {
 	}
 	public void setLanguage(Language language) {
 		this.language = language;
+	}
+	public List<Url> getUrls() {
+		return urls;
+	}
+
+	public void setUrls(List<Url> urls) {
+		this.urls = urls;
 	}
 }
