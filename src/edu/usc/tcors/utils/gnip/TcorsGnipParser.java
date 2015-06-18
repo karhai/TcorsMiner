@@ -90,8 +90,8 @@ public class TcorsGnipParser {
 			e.printStackTrace();
 		}
 		
-		String sql = "INSERT IGNORE INTO GnipObj (id,body) " +
-				"VALUES (?,?)";
+		String sql = "INSERT IGNORE INTO GnipObj (id,body,postedTime) " +
+				"VALUES (?,?,?)";
 		PreparedStatement ps = null;
 		
 		for (GnipObj g : gnipObjs) {
@@ -100,12 +100,14 @@ public class TcorsGnipParser {
 			
 				String id = g.getId();
 				String body = g.getBody();
+				String postedTime = g.getPostedTime();
 				
 				try {
 					ps = conn.prepareStatement(sql);
 					
 					ps.setString(1, id);
 					ps.setString(2, body);
+					ps.setString(3, postedTime);
 					
 					ps.execute();
 				} catch (SQLException e) {
@@ -142,7 +144,6 @@ public class TcorsGnipParser {
 		BufferedWriter out = new BufferedWriter(fw);
 		String line;
 		out.write("[");
-		int previous = 1;
 		while ((line = br.readLine()) != null) {
 			if (line.isEmpty()) {
 				// do nothing
