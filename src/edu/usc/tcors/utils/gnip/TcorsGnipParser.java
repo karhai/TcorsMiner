@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -90,8 +91,8 @@ public class TcorsGnipParser {
 			e.printStackTrace();
 		}
 		
-		String sql = "INSERT IGNORE INTO GnipObj (id,body,postedTime) " +
-				"VALUES (?,?,?)";
+		String sql = "REPLACE INTO GnipObj (id,body,postedTime,userId,coord) " +
+				"VALUES (?,?,?,?,?)";
 		PreparedStatement ps = null;
 		
 		for (GnipObj g : gnipObjs) {
@@ -101,6 +102,13 @@ public class TcorsGnipParser {
 				String id = g.getId();
 				String body = g.getBody();
 				String postedTime = g.getPostedTime();
+				String userId = g.getActor().getId();
+				ArrayList coord = null;
+				try {
+					coord = (ArrayList) g.getGeo().getCoordinates();
+				} catch (NullPointerException n) {
+					coord = new ArrayList<String>();
+				}
 				
 				try {
 					ps = conn.prepareStatement(sql);
@@ -108,6 +116,8 @@ public class TcorsGnipParser {
 					ps.setString(1, id);
 					ps.setString(2, body);
 					ps.setString(3, postedTime);
+					ps.setString(4, userId);
+					ps.setString(5, coord.toString());
 					
 					ps.execute();
 				} catch (SQLException e) {

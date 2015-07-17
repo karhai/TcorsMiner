@@ -1,12 +1,15 @@
 package edu.usc.tcors.utils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -27,6 +30,7 @@ import edu.usc.tcors.TcorsTwitterStream;
 
 public class TcorsTwitterUtils {
 
+	String fileName = "keywords.txt";
 	
 	public static void main(String[] args) {
 		// missing 4/17 data, from 589011127519948800L to 589100941686743042L
@@ -40,12 +44,71 @@ public class TcorsTwitterUtils {
 		Connection conn  = null;
 		try {
 			conn = u.getDBConn("configuration.properties");
+			
 			// maxId = 609485130428743680L
-			u.search("sb 24", 608579636574851074L, 609485130428743680L, conn);
+			// u.search("blu", 621625841726787584L, 621639744489947136L, conn);
+			
 			// u.getUserHistoricalTweets(2337766219L, conn);
+			
+			u.getTweetsByID(621625841726787584L, 621739506559905792L, conn);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void getTweetsByID(long min_id, long max_id, Connection conn) throws SQLException {
+		
+		// open keywords.txt
+		String keywords[] = null;
+		try {
+			keywords = loadSearchTerms();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		// for each word
+		long check = 0L;
+		for (String word : keywords) {
+		
+			// u.search word with min and max
+			System.out.println("SEARCH FOR:" + word);
+			check = search(word, min_id, max_id, conn);
+			
+			// if number is returned, wait 15 minutes, then run search with new maxId
+			while (check > 0L) {
+				// wait 15 minutes
+				System.out.println("Pausing for effect...");
+				try {
+					Thread.sleep(900000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
+				// run search with same word, new maxId
+				check = search(word, min_id, check, conn);
+			}
+		}
+	}
+
+	/*
+	 * TODO: refactor
+	 */
+	
+	private String[] loadSearchTerms() throws IOException {
+		ArrayList<String> ret = new ArrayList<String>();
+		
+		InputStream is = ClassLoader.getSystemResourceAsStream(fileName);
+		BufferedReader file = new BufferedReader(new InputStreamReader(is));
+		String line = null;
+		while ((line = file.readLine()) != null) {
+			if (!line.startsWith("#")) {
+				ret.add(line);
+			}
+		}
+		file.close();
+		
+		return ret.toArray(new String[ret.size()]);
 	}
 	
 	private void getUserHistoricalTweets(long id, Connection conn) throws SQLException {
@@ -68,11 +131,7 @@ public class TcorsTwitterUtils {
 		
 	}
 	
-	private void getManyUsersHistoricalTweets() {
-		
-	}
-	
-	private void search(String searchTerm, long sinceId, long maxId, final Connection conn) throws SQLException {
+	private long search(String searchTerm, long sinceId, long maxId, final Connection conn) throws SQLException {
 		// Map<String,Integer> terms = new HashMap<String,Integer>();
 		Twitter twitter = getInstance();
 		Query query = new Query(searchTerm);
@@ -104,10 +163,25 @@ public class TcorsTwitterUtils {
 		System.out.println("i total:" + i);
 		System.out.println("term:" + searchTerm);
 		
+		/*
+		 * TODO: need to handle the rare case of exactly 100 remaining 
+		 */
+		
+		long check = 0L;
 		if (i == 100 && result.getRateLimitStatus().getRemaining() > 1) {
 			System.out.println("more needed");
-			search(searchTerm, sinceId, newMaxId, conn);
+			check = search(searchTerm, sinceId, newMaxId, conn);
+		} else {
+			if (i == 100 && result.getRateLimitStatus().getRemaining() == 1) {
+				check = newMaxId;
+			} else {
+				if (i < 100) {
+					check = 0;
+				}
+			}
 		}
+
+		return check;
 	}
 	
 	private Twitter getInstance() {
