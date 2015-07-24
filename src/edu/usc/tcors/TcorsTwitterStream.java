@@ -29,7 +29,7 @@ import twitter4j.conf.ConfigurationBuilder;
  * 							echo "process completed" | 
  * 							mail -s "process completed" mail@email.com
  * 
- * jar file execution: java -jar TcorsTwitterStream.jar
+ * jar file execution: java -cp TcorsMiner.jar edu.usc.tcors.TcorsTwitterStream
  */
 
 public class TcorsTwitterStream {

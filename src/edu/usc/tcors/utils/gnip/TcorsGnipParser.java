@@ -91,8 +91,8 @@ public class TcorsGnipParser {
 			e.printStackTrace();
 		}
 		
-		String sql = "REPLACE INTO GnipObj (id,body,postedTime,userId,coord) " +
-				"VALUES (?,?,?,?,?)";
+		String sql = "REPLACE INTO GnipObj (id,body,postedTime,userId,coord,summary,location) " +
+				"VALUES (?,?,?,?,?,?,?)";
 		PreparedStatement ps = null;
 		
 		for (GnipObj g : gnipObjs) {
@@ -103,11 +103,20 @@ public class TcorsGnipParser {
 				String body = g.getBody();
 				String postedTime = g.getPostedTime();
 				String userId = g.getActor().getId();
+				String userSummary = g.getActor().getSummary();
+				String userLocation = "";
 				ArrayList coord = null;
+				
 				try {
 					coord = (ArrayList) g.getGeo().getCoordinates();
 				} catch (NullPointerException n) {
 					coord = new ArrayList<String>();
+				}
+				
+				try {
+					userLocation = g.getActor().getLocation().getDisplayName();
+				} catch (NullPointerException n) {
+					
 				}
 				
 				try {
@@ -118,6 +127,8 @@ public class TcorsGnipParser {
 					ps.setString(3, postedTime);
 					ps.setString(4, userId);
 					ps.setString(5, coord.toString());
+					ps.setString(6, userSummary);
+					ps.setString(7, userLocation);
 					
 					ps.execute();
 				} catch (SQLException e) {

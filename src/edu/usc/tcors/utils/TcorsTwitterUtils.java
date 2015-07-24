@@ -33,12 +33,6 @@ public class TcorsTwitterUtils {
 	String fileName = "keywords.txt";
 	
 	public static void main(String[] args) {
-		// missing 4/17 data, from 589011127519948800L to 589100941686743042L
-		// new TcorsTwitterUtils().search("vaping", 589011127519948800L, 589100941686743042L);
-		
-		// missing 5/14 data, from 598795797405126657L to 598983856839139330L
-		
-		// missing 6/10-6/12, from 608579636574851074L to 609485130428743680L
 		
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Connection conn  = null;
@@ -46,11 +40,9 @@ public class TcorsTwitterUtils {
 			conn = u.getDBConn("configuration.properties");
 			
 			// maxId = 609485130428743680L
-			// u.search("blu", 621625841726787584L, 621639744489947136L, conn);
+			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
 			
-			// u.getUserHistoricalTweets(2337766219L, conn);
-			
-			u.getTweetsByID(621625841726787584L, 621739506559905792L, conn);
+			u.getTweetsByID(623798359074050048L, 624273856740630528L, conn);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -168,7 +160,13 @@ public class TcorsTwitterUtils {
 		 */
 		
 		long check = 0L;
-		if (i == 100 && result.getRateLimitStatus().getRemaining() > 1) {
+		int remaining = 2; // assume greater than 1.. if less, it will fail anyway ;)
+		try {
+			remaining = result.getRateLimitStatus().getRemaining();
+		} catch (NullPointerException n) {
+			// do nothing
+		}
+		if (i == 100 && remaining > 1) {
 			System.out.println("more needed");
 			check = search(searchTerm, sinceId, newMaxId, conn);
 		} else {
