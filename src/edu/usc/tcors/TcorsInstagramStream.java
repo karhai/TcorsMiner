@@ -4,26 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import org.jinstagram.Instagram;
+import org.jinstagram.auth.model.Token;
 import org.jinstagram.exceptions.InstagramException;
-import org.jinstagram.realtime.InstagramSubscription;
-import org.jinstagram.realtime.SubscriptionType;
 
 public class TcorsInstagramStream {
 	
 	public static void main(String[] args) throws InstagramException {
 
-	}
-
-	private void getStreamSubscription() {
-		Properties prop = getProps();
-		InstagramSubscription igSub = new InstagramSubscription()
-			.clientId(prop.getProperty("oauth.consumerKey"))
-			.clientSecret(prop.getProperty("oauth.consumerSecret"))
-			.object(SubscriptionType.TAGS)
-			.objectId("ecig")
-			.aspect("media")
-			.callback("http://karhaich.usc.edu/handleSubscription")
-			.verifyToken("ecigTagSubscription");
 	}
 	
 	private Properties getProps() {
@@ -34,14 +22,18 @@ public class TcorsInstagramStream {
 		} catch (IOException e) {
 			// log.error(e.toString());
 		}
-//		ConfigurationBuilder igConf = new ConfigurationBuilder();
-//		igConf.setIncludeEntitiesEnabled(true);
-//		igConf.setDebugEnabled(Boolean.valueOf(prop.getProperty("debug")));
-//		igConf.setOAuthConsumerKey(prop.getProperty("oauth.consumerKey"));
-//		igConf.setOAuthConsumerSecret(prop.getProperty("oauth.consumerSecret"));
-//		igConf.setJSONStoreEnabled(true);
-		
 		return prop;
 	}
 	
+	private Token getSecretToken() {
+		Properties iProp = getProps();
+		Token secretToken = new Token(iProp.getProperty("oauth.accessToken"),null);
+		return secretToken;
+	}
+	
+	private void getStuff() {
+		Instagram instagram = new Instagram(getSecretToken());
+		
+		
+	}
 }

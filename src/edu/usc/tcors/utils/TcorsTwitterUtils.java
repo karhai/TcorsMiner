@@ -42,7 +42,7 @@ public class TcorsTwitterUtils {
 			// maxId = 609485130428743680L
 			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
 			
-			u.getTweetsByID(623798359074050048L, 624273856740630528L, conn);
+			u.getTweetsByID(630322645259517957L, 630429104295145472L, conn);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
