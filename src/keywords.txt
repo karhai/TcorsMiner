@@ -1,2 +1,116 @@
+# generic terms -- added 3/24/2015
+e-cig 
 ecig
-e-cig
+e-cigs
+ecigs
+e-cigarette
+ecigarette
+e-cigarettes
+ecigarettes
+vape
+vaper
+vaping
+vapes
+vapers
+nicotine
+tobacco
+cigarette
+cigarettes
+cigar
+atomizer
+atomizers
+cartomizer
+cartomizers
+ehookah
+e-hookah
+ejuice
+ejuices
+e-juice
+e-juices
+eliquid
+eliquids
+e-liquid
+e-liquids
+# brands
+blu
+njoy
+green smoke
+south beach smoke
+eversmoke
+joye 510
+joye510
+joyetech
+lavatube
+lavatubes
+logicecig
+logicecigs
+smartsmoker
+smokestiks
+v2 cig
+v2 cigs
+v2cigs
+v2cig
+mistic
+21st century smoke
+logic black label
+finiti
+nicotek
+cigirex
+logic platinum
+cigalectric
+xhale o2
+cig2o
+green smart living
+krave
+# second hand vape terms
+secondhand vape
+secondhand vaping
+second-hand vape
+second-hand vaping
+vape smoke
+ecig smoke
+e-cig smoke
+e-cigarette smoke
+vape shs
+ecig shs
+vape secondhand smoke
+vape second-hand smoke
+esmoke
+e-smoke
+# blowing smoke campaign -- added 4/19/2015
+stillblowingsmoke
+still blowing smoke
+notblowingsmoke
+not blowing smoke
+capublichealth
+# tobacco free kids -- added 4/30/2015
+tobaccofreekids
+notareplacement 
+# truly free campaign -- added 5/29/2015
+trulyfree
+truly free
+# california laws -- added 5/30/2015
+sb140
+sb 140
+sb24
+sb 24
+# swisher terms -- added 6/16/2016
+cherry tip cigarillos
+mini-cigarillos
+tip cigarillos
+king edward cigars
+royal gold cigars
+sweet coronella
+swisher blk
+swisher sweets
+# vaporcon -- added 6/19/2015
+vapercon
+vapercon west
+grimmgreen
+vapor
+electronic cigarette
+vape meet
+# random terms -- added 7/13/2015
+EcigsSaveLive
+EcigsSaveLives
+EcigsSavesLives
