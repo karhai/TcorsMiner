@@ -42,7 +42,7 @@ public class TcorsTwitterUtils {
 			// maxId = 609485130428743680L
 			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
 			
-			u.getTweetsByID(630322645259517957L, 630429104295145472L, conn);
+			u.getTweetsByID(631411025993035776L, 631549675347152896L, conn);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -166,6 +166,9 @@ public class TcorsTwitterUtils {
 		} catch (NullPointerException n) {
 			// do nothing
 		}
+		
+		// TODO: logic needs to be fixed. problem if a word is completed (<100) and breaks the 2-to-1 limit
+		
 		if (i == 100 && remaining > 1) {
 			System.out.println("more needed");
 			check = search(searchTerm, sinceId, newMaxId, conn);
