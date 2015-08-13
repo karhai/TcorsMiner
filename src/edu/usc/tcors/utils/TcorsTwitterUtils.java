@@ -30,7 +30,7 @@ import edu.usc.tcors.TcorsTwitterStream;
 
 public class TcorsTwitterUtils {
 
-	String fileName = "keywords.txt";
+	static String fileName = "keywords.txt";
 	
 	public static void main(String[] args) {
 		
@@ -87,7 +87,7 @@ public class TcorsTwitterUtils {
 	 * TODO: refactor
 	 */
 	
-	private String[] loadSearchTerms() throws IOException {
+	public static String[] loadSearchTerms() throws IOException {
 		ArrayList<String> ret = new ArrayList<String>();
 		
 		InputStream is = ClassLoader.getSystemResourceAsStream(fileName);
@@ -167,7 +167,9 @@ public class TcorsTwitterUtils {
 			// do nothing
 		}
 		
-		// TODO: logic needs to be fixed. problem if a word is completed (<100) and breaks the 2-to-1 limit
+		/*
+		 * TODO: logic needs to be fixed. problem if a word is completed (<100) and breaks the 2-to-1 limit
+		 */
 		
 		if (i == 100 && remaining > 1) {
 			System.out.println("more needed");
@@ -212,6 +214,10 @@ public class TcorsTwitterUtils {
 		
 		return twitterConf;
 	}
+	
+	/*
+	 * Utilities for Gnip data integration
+	 */
 	
 	private void storeUserData(Connection conn, Status status) throws SQLException {
 		String sql = "REPLACE INTO twitter_profiles(userId, description, friendsCount, followersCount, screenName, statusesCount, location, name)" +
@@ -265,6 +271,10 @@ public class TcorsTwitterUtils {
 			ps.close();
 		}
 	}
+	
+	/*
+	 * Configuration utilities
+	 */
 	
 	private Properties getDBConf(String filename) {
 		Properties prop = new Properties();
