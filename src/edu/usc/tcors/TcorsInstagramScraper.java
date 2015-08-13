@@ -8,7 +8,7 @@ import org.jinstagram.Instagram;
 import org.jinstagram.auth.model.Token;
 import org.jinstagram.exceptions.InstagramException;
 
-public class TcorsInstagramStream {
+public class TcorsInstagramScraper {
 	
 	public static void main(String[] args) throws InstagramException {
 
