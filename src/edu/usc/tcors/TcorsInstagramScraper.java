@@ -12,6 +12,7 @@ import java.util.Properties;
 
 import org.jinstagram.Instagram;
 import org.jinstagram.auth.model.Token;
+import org.jinstagram.entity.comments.CommentData;
 import org.jinstagram.entity.common.Comments;
 import org.jinstagram.entity.common.User;
 import org.jinstagram.entity.tags.TagMediaFeed;
@@ -99,18 +100,24 @@ public class TcorsInstagramScraper {
 			System.out.println("mediaFeed REMAIN:" + mediaFeed.getRemainingLimitStatus());
 			
 			// #2 retrieve and store individual pieces of data
-			String sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url) " +
+			String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url) " +
 					"VALUE (?, ?, ?, ?, ?, ?, ?)";
+			
+			String comments_sql = "REPLACE INTO instagram_comments (id, parent_id, username, comment, created_time) " +
+					"VALUE (?, ?, ?)";
+			
+			String users_sql = "REPLACE INTO instagram_users (id, bio, fullname, username) " +
+					"VALUE (?, ?, ?, ?)";
+			
 			System.out.println("Updating DB...");
 			
 			try {
-				PreparedStatement ps = conn.prepareStatement(sql);
+				PreparedStatement instagram_ps = conn.prepareStatement(instagram_sql);
+				PreparedStatement comments_ps = conn.prepareStatement(comments_sql);
+				PreparedStatement users_ps = conn.prepareStatement(users_sql);
 			
 				for (MediaFeedData mfd : mediaList) {
 					String caption = mfd.getCaption().getText();
-					Comments comments = mfd.getComments();
-					int comments_count = comments.getCount();
-					// process comments
 					// processComments(comments);
 					Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
 					String id = mfd.getId();
@@ -119,22 +126,52 @@ public class TcorsInstagramScraper {
 					// String location = mfd.getLocation().getName();
 					User user = mfd.getUser();
 					String username = user.getUserName();
+					String user_bio = user.getBio(); //string
+					String user_fullname = user.getFullName(); //string
+					String user_id = user.getId(); //string
 					// process user
 					// processUser(user);
+					Comments comments = mfd.getComments();
+					int comments_count = comments.getCount();
+					// process comments
+					List<CommentData> cd = comments.getComments();
+					for (CommentData comment_data : cd) {
+						String comment_id = comment_data.getId();
+						String comment_username = comment_data.getCommentFrom().getUsername();
+						String comment_text = comment_data.getText();
+						String comment_created_time = comment_data.getCreatedTime();
+						
+						comments_ps.setString(1, comment_id);
+						comments_ps.setString(2, id);
+						comments_ps.setString(3, comment_username);
+						comments_ps.setString(4, comment_text);
+						comments_ps.setString(5, comment_created_time);
+						
+						comments_ps.addBatch();
+					}
 					
 					// store data
-					ps.setString(1, id);
-					ps.setTimestamp(2, ts);
-					ps.setString(3, username);
-					ps.setString(4, caption);
-					ps.setInt(5, likes);
-					ps.setInt(6, comments_count);
-					ps.setString(7, url);
+					instagram_ps.setString(1, id);
+					instagram_ps.setTimestamp(2, ts);
+					instagram_ps.setString(3, username);
+					instagram_ps.setString(4, caption);
+					instagram_ps.setInt(5, likes);
+					instagram_ps.setInt(6, comments_count);
+					instagram_ps.setString(7, url);
 					
-					ps.addBatch();
+					users_ps.setString(1, user_id);
+					users_ps.setString(2, user_bio);
+					users_ps.setString(3, user_fullname);
+					users_ps.setString(4, username);
+					
+					instagram_ps.addBatch();
+					users_ps.addBatch();
 				}
 				
-				ps.executeBatch();
+				instagram_ps.executeBatch();
+				users_ps.executeBatch();
+				comments_ps.executeBatch();
+				
 				System.out.println("Finished DB update");
 			
 			} catch (SQLException e) {
