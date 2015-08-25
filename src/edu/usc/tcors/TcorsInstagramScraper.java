@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
@@ -25,6 +26,10 @@ import edu.usc.tcors.utils.TcorsTwitterUtils;
 
 public class TcorsInstagramScraper {
 	
+	final String latest_id_sql = "SELECT min_id " +
+			"FROM instagram_terms " +
+			"WHERE search_term = ?";
+	
 	final String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location) " +
 			"VALUE (?, ?, ?, ?, ?, ?, ?, ?)";
 	
@@ -38,6 +43,8 @@ public class TcorsInstagramScraper {
 			"VALUE (?, ?)";
 	
 	private static Connection conn;
+	
+	final int returnSize = 33;
 
 	private Connection getConnection() {
 		return TcorsInstagramScraper.conn;
@@ -89,74 +96,117 @@ public class TcorsInstagramScraper {
 		Instagram instagram = new Instagram(secretToken);
 		
 		// get search terms
-		// String[] test = new String[]{"ecigarette","ecig"};
+//		String[] test = new String[]{"ecigarette","ecig","e-hookah"};
 		String[] test = {};
 		try {
 			test = TcorsTwitterUtils.loadSearchTerms();
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
 		// for each search term
 		for (String term : test) {
 			
-			// get data from Instagram
-			List<MediaFeedData> mediaList = getPostsByTerm(instagram, term);
+			if (!term.contains("-") && !term.contains(" ")) {
 			
-			System.out.println("Updating DB...");
-			
-			try {
-			
-				PreparedStatement instagram_ps = getConnection().prepareStatement(instagram_sql);
-				PreparedStatement comments_ps = getConnection().prepareStatement(comments_sql);
-				PreparedStatement users_ps = getConnection().prepareStatement(users_sql);
-				PreparedStatement term_ps = getConnection().prepareStatement(term_sql);
-				
-				String search_term = "";
+				// get latest ID
+				String full_min_id = "";
 				String min_id = "";
 				
-				// iterate for each data chunk
-				for (MediaFeedData mfd : mediaList) {
-
-					String id = mfd.getId();
-					
-					// process post, comment, and user data separately
-					instagram_ps = parseInstagramPostData(instagram_ps, mfd);
-					comments_ps = parseInstagramCommentData(comments_ps, mfd);
-					users_ps = parseInstagramUsersData(users_ps, mfd);
-					
-					/*
-					 * get the latest ID for future runs
-					 */
-					if (min_id == "") {
-						search_term = term;
-						min_id = id;
-						
-						term_ps.setString(1, search_term);
-						term_ps.setString(2, min_id);
-					}
-					
+				// grab the post ID portion without user ID
+				System.out.println("Working on term: " + term);
+				full_min_id = getLatestID(term);
+				System.out.println("Found latest ID: " + full_min_id);
+				if (full_min_id != "") {
+					min_id = full_min_id.substring(0, full_min_id.indexOf("_"));
 				}
 				
-				// insert into database
-				instagram_ps.executeBatch();
-				users_ps.executeBatch();
-				comments_ps.executeBatch();
-				term_ps.execute();
+				// get data from Instagram
+				List<MediaFeedData> mediaList = getPostsByTerm(instagram, term, min_id);
 				
-				System.out.println("Finished DB update");
-			
-			} catch (SQLException e) {
-				e.printStackTrace();
+				System.out.println("Updating DB...");
+				String new_min_id = "";
+				
+				try {
+				
+					PreparedStatement instagram_ps = getConnection().prepareStatement(instagram_sql);
+					PreparedStatement comments_ps = getConnection().prepareStatement(comments_sql);
+					PreparedStatement users_ps = getConnection().prepareStatement(users_sql);
+					PreparedStatement term_ps = getConnection().prepareStatement(term_sql);
+					
+					String search_term = "";
+					
+					// iterate for each data chunk
+					for (MediaFeedData mfd : mediaList) {
+	
+						String id = mfd.getId();
+						
+						// process post, comment, and user data separately
+						instagram_ps = parseInstagramPostData(instagram_ps, mfd);
+						comments_ps = parseInstagramCommentData(comments_ps, mfd);
+						users_ps = parseInstagramUsersData(users_ps, mfd);
+						
+						/*
+						 * get the latest ID for future runs
+						 */
+						if (new_min_id == "") {
+							search_term = term;
+							new_min_id = id;
+							
+							term_ps.setString(1, search_term);
+							term_ps.setString(2, new_min_id);
+						}
+						
+					}
+					
+					// insert into database
+					instagram_ps.executeBatch();
+					users_ps.executeBatch();
+					comments_ps.executeBatch();
+					
+					if (search_term != "") {
+						term_ps.execute();
+					}
+					
+					System.out.println("Finished DB update");
+				
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			}
 		}
-		// pause
+		
+		// pause for an hour
+		
+	}
+	
+	private String getLatestID(String term) {
+		String min_id = "";
+		try {
+			PreparedStatement st = getConnection().prepareStatement(latest_id_sql);
+			st.setString(1, term);
+			ResultSet rs = st.executeQuery();
+			
+			while (rs.next()) {
+				min_id = rs.getString("min_id");
+			}
+			
+			st.close();
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		return min_id;
 	}
 	
 	private PreparedStatement parseInstagramPostData(PreparedStatement instagram_ps, MediaFeedData mfd) throws SQLException {
 		
-		String caption = mfd.getCaption().getText();
+		String caption = "";
+		try {
+			caption = mfd.getCaption().getText();
+		} catch (NullPointerException n) {
+			
+		}
 		
 		Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
 		String id = mfd.getId();
@@ -236,15 +286,15 @@ public class TcorsInstagramScraper {
 	 * use Instagram API to retrieve posts based on a single term
 	 */
 	
-	private List<MediaFeedData> getPostsByTerm(Instagram instagram, String term) {
+	private List<MediaFeedData> getPostsByTerm(Instagram instagram, String term, String min_id) {
 		
 		TagMediaFeed mediaFeed = null;
 		List<MediaFeedData> mediaList = null;
 		int limit = 0;
 		
 		try {
-			// mediaFeed = instagram.getRecentMediaTags(term, 100); // max is only 33
-			mediaFeed = instagram.getRecentMediaTags(term, "1056644176036480951", "");
+			
+			mediaFeed = instagram.getRecentMediaTags(term, min_id, "", returnSize);
 			mediaList = mediaFeed.getData();
 			System.out.println("Step 1 size:" + mediaFeed.getData().size());
 			
@@ -258,16 +308,15 @@ public class TcorsInstagramScraper {
 			System.out.println("mediaFeed REMAIN:" + limit);
 			
 			if (recentMediaNextPage != null) {
-				while (recentMediaNextPage.getPagination() != null && limit > 4990) {
+				while (recentMediaNextPage.getPagination() != null && counter < 50) {
 					
 					mediaList.addAll(recentMediaNextPage.getData());
+					
+					// TODO: less than 50 pages causes InstagramException
 					recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
 					
 					counter++;
 					System.out.println("Counter (pages):" + counter);
-					limit = mediaFeed.getRemainingLimitStatus();
-					System.out.println("mediaFeed REMAIN:" + limit);
-					limit = 4800;
 				}
 			}
 			System.out.println("Size (x33):" + mediaList.size());
