@@ -56,12 +56,11 @@ public class TcorsInstagramScraper {
 	
 	public static void main(String[] args) throws InstagramException {
 		
+		// TODO: use config file
 		try {
-			
 			Class.forName("com.mysql.jdbc.Driver");
 			String url = "jdbc:mysql://localhost:3306/TcorsTwitter";
 			setConnection(DriverManager.getConnection(url,"root","309root"));
-			
 		} catch (SQLException ex) {
 			System.out.println("SQLException: " + ex.getMessage());
 			System.out.println("SQLState: " + ex.getSQLState());
@@ -71,7 +70,22 @@ public class TcorsInstagramScraper {
 		}
 		
 		TcorsInstagramScraper tis = new TcorsInstagramScraper();
-		tis.getStuff();
+//		tis.go();
+		
+		while (true) {
+			try {
+				tis.go();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			try {
+				Thread.sleep(300000); // 5 minute wait between ids chunks
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	private Properties getProps() {
@@ -91,7 +105,7 @@ public class TcorsInstagramScraper {
 		return secretToken;
 	}
 	
-	private void getStuff() {
+	private void go() throws SQLException {
 		Token secretToken = getSecretToken();
 		Instagram instagram = new Instagram(secretToken);
 		
@@ -127,12 +141,17 @@ public class TcorsInstagramScraper {
 				System.out.println("Updating DB...");
 				String new_min_id = "";
 				
+				PreparedStatement instagram_ps = null;
+				PreparedStatement comments_ps = null;
+				PreparedStatement users_ps = null;
+				PreparedStatement term_ps = null;
+				
 				try {
 				
-					PreparedStatement instagram_ps = getConnection().prepareStatement(instagram_sql);
-					PreparedStatement comments_ps = getConnection().prepareStatement(comments_sql);
-					PreparedStatement users_ps = getConnection().prepareStatement(users_sql);
-					PreparedStatement term_ps = getConnection().prepareStatement(term_sql);
+					instagram_ps = getConnection().prepareStatement(instagram_sql);
+					comments_ps = getConnection().prepareStatement(comments_sql);
+					users_ps = getConnection().prepareStatement(users_sql);
+					term_ps = getConnection().prepareStatement(term_sql);
 					
 					String search_term = "";
 					
@@ -172,18 +191,21 @@ public class TcorsInstagramScraper {
 				
 				} catch (SQLException e) {
 					e.printStackTrace();
+				} finally {
+					instagram_ps.close();
+					users_ps.close();
+					comments_ps.close();
+					term_ps.close();
 				}
 			}
 		}
-		
-		// pause for an hour
-		
 	}
 	
-	private String getLatestID(String term) {
+	private String getLatestID(String term) throws SQLException {
 		String min_id = "";
+		PreparedStatement st = null;
 		try {
-			PreparedStatement st = getConnection().prepareStatement(latest_id_sql);
+			st = getConnection().prepareStatement(latest_id_sql);
 			st.setString(1, term);
 			ResultSet rs = st.executeQuery();
 			
@@ -193,8 +215,9 @@ public class TcorsInstagramScraper {
 			
 			st.close();
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
+		} finally {
+			st.close();
 		}
 		return min_id;
 	}
@@ -299,7 +322,7 @@ public class TcorsInstagramScraper {
 			System.out.println("Step 1 size:" + mediaFeed.getData().size());
 			
 			MediaFeed recentMediaNextPage = null;
-			if (mediaFeed.getData().size() == 33) {
+			if (mediaFeed.getData().size() >= 33) { // or returnSize?
 				recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
 			}
 			int counter = 1;
@@ -308,12 +331,15 @@ public class TcorsInstagramScraper {
 			System.out.println("mediaFeed REMAIN:" + limit);
 			
 			if (recentMediaNextPage != null) {
-				while (recentMediaNextPage.getPagination() != null && counter < 50) {
+				while (recentMediaNextPage.getPagination() != null && counter < 10) {
 					
 					mediaList.addAll(recentMediaNextPage.getData());
 					
 					// TODO: less than 50 pages causes InstagramException
 					recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
+					
+					// test
+					System.out.println("test ID:" + recentMediaNextPage.getData().get(0).getId());
 					
 					counter++;
 					System.out.println("Counter (pages):" + counter);
