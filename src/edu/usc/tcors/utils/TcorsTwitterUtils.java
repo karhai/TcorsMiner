@@ -1,19 +1,13 @@
 package edu.usc.tcors.utils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
-import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 
 import twitter4j.Paging;
 import twitter4j.Query;
@@ -22,8 +16,6 @@ import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
-import twitter4j.TwitterStream;
-import twitter4j.TwitterStreamFactory;
 import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 import edu.usc.tcors.TcorsTwitterStream;
@@ -35,9 +27,10 @@ public class TcorsTwitterUtils {
 	public static void main(String[] args) {
 		
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
+		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		Connection conn  = null;
 		try {
-			conn = u.getDBConn("configuration.properties");
+			conn = tmu.getDBConn("configuration.properties");
 			
 			// maxId = 609485130428743680L
 			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
@@ -53,9 +46,8 @@ public class TcorsTwitterUtils {
 		// open keywords.txt
 		String keywords[] = null;
 		try {
-			keywords = loadSearchTerms();
+			keywords = TcorsMinerUtils.loadSearchTerms();
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
@@ -81,26 +73,6 @@ public class TcorsTwitterUtils {
 				check = search(word, min_id, check, conn);
 			}
 		}
-	}
-
-	/*
-	 * TODO: refactor
-	 */
-	
-	public static String[] loadSearchTerms() throws IOException {
-		ArrayList<String> ret = new ArrayList<String>();
-		
-		InputStream is = ClassLoader.getSystemResourceAsStream(fileName);
-		BufferedReader file = new BufferedReader(new InputStreamReader(is));
-		String line = null;
-		while ((line = file.readLine()) != null) {
-			if (!line.startsWith("#")) {
-				ret.add(line);
-			}
-		}
-		file.close();
-		
-		return ret.toArray(new String[ret.size()]);
 	}
 	
 	private void getUserHistoricalTweets(long id, Connection conn) throws SQLException {
@@ -137,7 +109,6 @@ public class TcorsTwitterUtils {
 		try {
 			result = twitter.search(query);
 		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -240,7 +211,6 @@ public class TcorsTwitterUtils {
 			System.out.println("Stored profile " + u.getScreenName());
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			ps.close();
@@ -265,44 +235,9 @@ public class TcorsTwitterUtils {
 			System.out.println("Stored tweet " + status.getId());
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			ps.close();
 		}
-	}
-	
-	/*
-	 * Configuration utilities
-	 */
-	
-	private Properties getDBConf(String filename) {
-		Properties prop = new Properties();
-		try {
-			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream(filename);
-			prop.load(in);
-		} catch (IOException e) {
-			// log.error(e.toString());
-		}
-		return prop;
-	}
-	
-	public Connection getDBConn(String filename) throws SQLException {
-		System.out.println("Creating a DB connection...");
-		Connection conn = null;
-		Properties prop = getDBConf(filename);
-
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		String url = prop.getProperty("url");
-		String user = prop.getProperty("user");
-		String password = prop.getProperty("password");
-			
-		conn = DriverManager.getConnection(url,user,password);
-		return conn;
 	}
 }

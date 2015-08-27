@@ -3,28 +3,20 @@ package edu.usc.tcors.utils.gnip;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import edu.usc.tcors.utils.TcorsTwitterUtils;
+import edu.usc.tcors.utils.TcorsMinerUtils;
 
 public class TcorsGnipParser {
 
@@ -83,10 +75,10 @@ public class TcorsGnipParser {
 	
 	public static void storeDB(List<GnipObj> gnipObjs) throws SQLException {
 		Connection conn = null;
-		TcorsTwitterUtils u = new TcorsTwitterUtils();
+		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		
 		try {
-			conn = u.getDBConn("gnip_configuration.properties");
+			conn = tmu.getDBConn("gnip_configuration.properties");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

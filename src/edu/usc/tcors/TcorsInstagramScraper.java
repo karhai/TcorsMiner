@@ -3,7 +3,6 @@ package edu.usc.tcors;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,7 +21,7 @@ import org.jinstagram.entity.users.feed.MediaFeed;
 import org.jinstagram.entity.users.feed.MediaFeedData;
 import org.jinstagram.exceptions.InstagramException;
 
-import edu.usc.tcors.utils.TcorsTwitterUtils;
+import edu.usc.tcors.utils.TcorsMinerUtils;
 
 public class TcorsInstagramScraper {
 	
@@ -56,23 +55,18 @@ public class TcorsInstagramScraper {
 	
 	public static void main(String[] args) throws InstagramException {
 		
-		// TODO: use config file
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-			String url = "jdbc:mysql://localhost:3306/TcorsTwitter";
-			setConnection(DriverManager.getConnection(url,"root","309root"));
-		} catch (SQLException ex) {
-			System.out.println("SQLException: " + ex.getMessage());
-			System.out.println("SQLState: " + ex.getSQLState());
-			System.out.println("VendorError: " + ex.getErrorCode());
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		TcorsInstagramScraper tis = new TcorsInstagramScraper();
-//		tis.go();
-		
 		while (true) {
+			
+			TcorsMinerUtils tmu = new TcorsMinerUtils();
+			try {
+				setConnection(tmu.getDBConn("configuration.properties"));
+			} catch (SQLException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
+			
+			TcorsInstagramScraper tis = new TcorsInstagramScraper();
+		
 			try {
 				tis.go();
 			} catch (SQLException e1) {
@@ -81,7 +75,14 @@ public class TcorsInstagramScraper {
 			}
 			
 			try {
-				Thread.sleep(300000); // 5 minute wait between ids chunks
+				tis.getConnection().close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			
+			try {
+				System.out.println("Taking a 2 minute nap...\n\n");
+				Thread.sleep(60000); // 2 minute wait between ids chunks
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -111,16 +112,17 @@ public class TcorsInstagramScraper {
 		
 		// get search terms
 //		String[] test = new String[]{"ecigarette","ecig","e-hookah"};
-		String[] test = {};
+		String[] terms = {};
 		try {
-			test = TcorsTwitterUtils.loadSearchTerms();
+			terms = TcorsMinerUtils.loadSearchTerms();
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
 		
 		// for each search term
-		for (String term : test) {
+		for (String term : terms) {
 			
+			// ignore terms with unacceptable symbols
 			if (!term.contains("-") && !term.contains(" ")) {
 			
 				// get latest ID
@@ -335,17 +337,17 @@ public class TcorsInstagramScraper {
 					
 					mediaList.addAll(recentMediaNextPage.getData());
 					
-					// TODO: less than 50 pages causes InstagramException
+					// TODO: less than counter pages causes InstagramException, need to check if it is null
 					recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
 					
 					// test
-					System.out.println("test ID:" + recentMediaNextPage.getData().get(0).getId());
+					// System.out.println("test ID:" + recentMediaNextPage.getData().get(0).getId());
 					
 					counter++;
 					System.out.println("Counter (pages):" + counter);
 				}
 			}
-			System.out.println("Size (x33):" + mediaList.size());
+			System.out.println("mediaList size (x33):" + mediaList.size());
 		} catch (InstagramException e) {
 			e.printStackTrace();
 		}
