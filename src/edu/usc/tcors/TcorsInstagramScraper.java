@@ -82,7 +82,7 @@ public class TcorsInstagramScraper {
 			
 			try {
 				System.out.println("Taking a 2 minute nap...\n\n");
-				Thread.sleep(60000); // 2 minute wait between ids chunks
+				Thread.sleep(120000); // 2 minute wait between ids chunks
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -324,9 +324,12 @@ public class TcorsInstagramScraper {
 			System.out.println("Step 1 size:" + mediaFeed.getData().size());
 			
 			MediaFeed recentMediaNextPage = null;
-			if (mediaFeed.getData().size() >= 33) { // or returnSize?
+			// if (mediaFeed.getData().size() >= 33) { // or returnSize?
+			if (mediaFeed.getPagination().hasNextPage()) {
 				recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
 			}
+			
+			// TODO the above/below if loops need to be cleaned up
 			int counter = 1;
 			
 			limit = mediaFeed.getRemainingLimitStatus();
@@ -336,8 +339,7 @@ public class TcorsInstagramScraper {
 				while (recentMediaNextPage.getPagination() != null && counter < 10) {
 					
 					mediaList.addAll(recentMediaNextPage.getData());
-					
-					// TODO: less than counter pages causes InstagramException, need to check if it is null
+
 					recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
 					
 					// test
