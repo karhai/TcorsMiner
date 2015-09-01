@@ -124,6 +124,10 @@ public class TcorsTwitterStream {
 		}
 	}
 	
+	/*
+	 * TODO: refactor
+	 */
+	
 	private void storeUserData(Connection conn, Status status) throws SQLException {
 		String sql = "REPLACE INTO twitter_profiles(userId, description, friendsCount, followersCount, screenName, statusesCount, location, name)" +
 				"VALUES (?,?,?,?,?,?,?,?)";
@@ -151,6 +155,10 @@ public class TcorsTwitterStream {
 			ps.close();
 		}
 	}
+	
+	/*
+	 * TODO: refactor
+	 */
 	
 	private void storeTweetData(Connection conn, Status status) throws SQLException {
 		String sql = "INSERT INTO tweets (id, createdAt, text, userId, isRetweet)" +

@@ -81,8 +81,8 @@ public class TcorsInstagramScraper {
 			}
 			
 			try {
-				System.out.println("Taking a 2 minute nap...\n\n");
-				Thread.sleep(120000); // 2 minute wait between ids chunks
+				System.out.println("Taking a 5 minute nap...\n\n");
+				Thread.sleep(300000); // 5 minute wait between ids chunks
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -193,6 +193,8 @@ public class TcorsInstagramScraper {
 				
 				} catch (SQLException e) {
 					e.printStackTrace();
+				} catch (NullPointerException e1) {
+					e1.printStackTrace();
 				} finally {
 					instagram_ps.close();
 					users_ps.close();

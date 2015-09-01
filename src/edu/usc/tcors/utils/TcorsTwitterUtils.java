@@ -9,9 +9,11 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Properties;
 
+import twitter4j.IDs;
 import twitter4j.Paging;
 import twitter4j.Query;
 import twitter4j.QueryResult;
+import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -35,7 +37,19 @@ public class TcorsTwitterUtils {
 			// maxId = 609485130428743680L
 			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
 			
-			u.getTweetsByID(631411025993035776L, 631549675347152896L, conn);
+			// u.getTweetsByID(631411025993035776L, 631549675347152896L, conn);
+			
+			// u.getUserHistoricalTweets(2231009702L, conn);
+			
+			// get follower IDs
+			IDs followers = null;
+			followers = u.getFollowers("vapingmilitia",-1,conn);
+			// get follower profiles
+			long[] id_array = followers.getIDs();
+			ResponseList<User> users = u.getProfiles(id_array);
+			// store profiles in DB
+			u.storeUserDataFromList(conn, users);
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -79,7 +93,7 @@ public class TcorsTwitterUtils {
 		Twitter twitter = getInstance();
 		Paging paging = new Paging(1,200);
 		paging.setCount(1000);
-		// paging.setMaxId(587170184189710336L);
+		paging.setMaxId(412286821792751616L);
 		// paging.setSinceId(587170184189710336L);
 		
 		List<Status> statuses = null;
@@ -184,6 +198,107 @@ public class TcorsTwitterUtils {
 		twitterConf.setJSONStoreEnabled(true);
 		
 		return twitterConf;
+	}
+	
+	
+	private IDs getFollowers(String id, long cursor, Connection conn) {
+		Twitter twitter = getInstance();
+		IDs followers = null;
+		try {
+			followers = twitter.getFollowersIDs(id, cursor);
+		} catch (TwitterException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println("Followers found for " + id + ":" + followers.getIDs().length);
+		
+		return followers;
+	}
+	
+	private ResponseList<User> getProfiles(long[] ids) {
+		ResponseList<User> profiles = null;
+		
+		// loop 100 at a time
+//		try {
+//			profiles = getInstance().lookupUsers(ids);
+//		} catch (TwitterException e) {
+//			e.printStackTrace();
+//		}
+		
+		/*
+		 * This is some strange code. It can definitely be improved.
+		 */
+		
+		int quotient = 0;
+		quotient = ids.length/100;
+		
+		int counter = 0;
+		boolean first = true;
+		while (counter < quotient+1) {
+			long[] tmp_ids = new long[100];
+			
+			for (int x = 0; x < 100; x++) {
+				if (counter*100 + x < ids.length) {
+					tmp_ids[x] = ids[counter*100 + x];
+				}
+			}
+			
+			// call get profiles on the tmp array
+			System.out.println("Loaded tmp_ids with:" + tmp_ids.length);
+			try {
+				if (first) {
+					profiles = getInstance().lookupUsers(tmp_ids);
+					first = false;
+				} else {
+					profiles.addAll(getInstance().lookupUsers(tmp_ids));
+				}
+				
+			} catch (TwitterException e) {
+				e.printStackTrace();
+			}
+			counter++;
+		}
+		
+		System.out.println("User profiles found: " + profiles.size());
+		
+		return profiles;
+	}
+	
+	/*
+	 * Might be refactorable with storeUserData
+	 */
+	
+	private void storeUserDataFromList(Connection conn, ResponseList<User> users) throws SQLException {
+		String sql = "REPLACE INTO twitter_profiles(userId, description, friendsCount, followersCount, screenName, statusesCount, location, name)" +
+				"VALUES (?,?,?,?,?,?,?,?)";
+		PreparedStatement ps = null; 
+		
+		System.out.println("Preparing to update DB...");
+		try {
+			ps = conn.prepareStatement(sql);
+			
+			for (User u : users) {
+			
+				ps.setString(1, String.valueOf(u.getId()));
+				ps.setString(2, u.getDescription());
+				ps.setInt(3, u.getFriendsCount());
+				ps.setInt(4, u.getFollowersCount());
+				ps.setString(5, u.getScreenName());
+				ps.setInt(6, u.getStatusesCount());
+				ps.setString(7, u.getLocation());
+				ps.setString(8, u.getName());
+				
+				ps.addBatch();
+			}
+			
+			ps.executeBatch();
+			System.out.println("DB updated!");
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ps.close();
+		}
 	}
 	
 	/*
