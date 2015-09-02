@@ -342,7 +342,9 @@ public class TcorsInstagramScraper {
 					
 					mediaList.addAll(recentMediaNextPage.getData());
 
-					recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
+					if (recentMediaNextPage.getPagination() != null) {
+						recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
+					}
 					
 					// test
 					// System.out.println("test ID:" + recentMediaNextPage.getData().get(0).getId());
