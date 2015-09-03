@@ -61,7 +61,6 @@ public class TcorsInstagramScraper {
 			try {
 				setConnection(tmu.getDBConn("configuration.properties"));
 			} catch (SQLException e2) {
-				// TODO Auto-generated catch block
 				e2.printStackTrace();
 			}
 			
@@ -70,7 +69,6 @@ public class TcorsInstagramScraper {
 			try {
 				tis.go();
 			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			
