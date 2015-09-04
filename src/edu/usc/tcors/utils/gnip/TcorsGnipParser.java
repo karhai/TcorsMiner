@@ -20,12 +20,15 @@ import edu.usc.tcors.utils.TcorsMinerUtils;
 
 public class TcorsGnipParser {
 
+	// final static String directory = "/Users/karhai/tmp/json/";
+	final static String directory = "/Users/karhai/tmp/json2/json/";
+	
 	public static void main (String args[]) {
 	
 		/*
 		 * process raw gnip files
 		 */
-//		final File folder = new File("/Users/karhai/tmp/json");
+//		final File folder = new File(directory);
 //		listFilesForFolder(folder);
 		
 		/*
@@ -33,16 +36,14 @@ public class TcorsGnipParser {
 		 */
 		try {
 			// readJSON("/Users/karhai/tmp/json/corrected/corrected_file1.json");
-			final File folder = new File("/Users/karhai/tmp/json/corrected");
+			// final File folder = new File("/Users/karhai/tmp/json/corrected");
+			final File folder = new File(directory + "corrected");
 			readMultiJSON(folder);
 		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -134,14 +135,14 @@ public class TcorsGnipParser {
 	
 	public static void listFilesForFolder(final File folder) {
 		for (final File fileEntry : folder.listFiles()) {
-			if (fileEntry.isDirectory()) {
+			System.out.println("Working on:" + fileEntry.getAbsolutePath());
+			if (fileEntry.isDirectory()) { // TODO bug where /corrected files get reprocessed if the directory is alphabetically after processed files
 				listFilesForFolder(fileEntry);
 			} else {
 				// System.out.println(fileEntry.getName());
 				try {
 					processFile(fileEntry.getName());
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -150,8 +151,8 @@ public class TcorsGnipParser {
 	
 	public static void processFile(String file_name) throws IOException {
 		BufferedReader br = null;
-		br = new BufferedReader(new FileReader("/Users/karhai/tmp/json/" + file_name));
-		File UIFile = new File("/Users/karhai/tmp/json/corrected/corrected_" + file_name);
+		br = new BufferedReader(new FileReader(directory + file_name));
+		File UIFile = new File(directory + "corrected/corrected_" + file_name);
 		FileWriter fw = null;
 		fw = new FileWriter(UIFile.getAbsoluteFile());
 		BufferedWriter out = new BufferedWriter(fw);

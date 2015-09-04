@@ -39,16 +39,16 @@ public class TcorsTwitterUtils {
 			
 			// u.getTweetsByID(631411025993035776L, 631549675347152896L, conn);
 			
-			// u.getUserHistoricalTweets(2231009702L, conn);
+			u.getUserHistoricalTweets(2231009702L, conn);
 			
-			// get follower IDs
-			IDs followers = null;
-			followers = u.getFollowers("vapingmilitia",-1,conn);
-			// get follower profiles
-			long[] id_array = followers.getIDs();
-			ResponseList<User> users = u.getProfiles(id_array);
-			// store profiles in DB
-			u.storeUserDataFromList(conn, users);
+//			// get follower IDs
+//			IDs followers = null;
+//			followers = u.getFollowers("vapingmilitia",-1,conn);
+//			// get follower profiles
+//			long[] id_array = followers.getIDs();
+//			ResponseList<User> users = u.getProfiles(id_array);
+//			// store profiles in DB
+//			u.storeUserDataFromList(conn, users);
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -333,8 +333,8 @@ public class TcorsTwitterUtils {
 	}
 	
 	private void storeTweetData(Connection conn, Status status) throws SQLException {
-		String sql = "INSERT IGNORE INTO tweets (id, createdAt, text, userId, isRetweet)" +
-				"VALUES (?,?,?,?,?)";
+		String sql = "INSERT IGNORE INTO tweets (id, createdAt, text, userId, isRetweet, retweets)" +
+				"VALUES (?,?,?,?,?,?)";
 		PreparedStatement ps = null;
 		
 		try {
@@ -344,6 +344,7 @@ public class TcorsTwitterUtils {
 			ps.setString(3, status.getText());
 			ps.setString(4, String.valueOf(status.getUser().getId()));
 			ps.setBoolean(5, status.isRetweet());
+			ps.setInt(6, status.getRetweetCount());
 			
 			ps.execute();
 				
