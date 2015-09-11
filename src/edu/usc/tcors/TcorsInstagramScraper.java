@@ -87,6 +87,10 @@ public class TcorsInstagramScraper {
 		}
 	}
 	
+	/*
+	 * TODO refactor out into the utilities
+	 */
+	
 	private Properties getProps() {
 		Properties prop = new Properties();
 		try {

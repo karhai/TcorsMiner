@@ -14,6 +14,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+
+import org.jinstagram.Instagram;
+import org.jinstagram.auth.model.Token;
+import org.jinstagram.entity.users.basicinfo.UserInfo;
+import org.jinstagram.entity.users.basicinfo.UserInfoData;
+import org.jinstagram.exceptions.InstagramException;
+
+import edu.usc.tcors.TcorsTwitterStream;
 
 public class TcorsInstagramUtils {
 
@@ -26,13 +35,30 @@ public class TcorsInstagramUtils {
 			"SET storePicture = 1 " +
 			"WHERE id = ?";
 	
-	// TODO need a better destintation folder for files storage
+	// TODO is there a better check for profiles that need updates?
+	
+	final static String get_user_IDs = "SELECT id " +
+			"FROM instagram_users " +
+			"WHERE follows IS NULL " +
+			"AND followedBy IS NULL " +
+			"AND bio IS NULL " +
+			"LIMIT 1000";
+	
+	final static String update_user_info = "UPDATE instagram_users " +
+			"SET bio = ?, follows = ?, followedBy = ? " +
+			"WHERE id = ?";
+	
+	final static String destination_directory = "/Users/karhai/tmp/instagram_pix/";
 	
 	public static void main(String[] args) throws Exception {
 		String destinationFile = "";
 		
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		Connection conn = tmu.getDBConn("configuration.properties");
+		
+		/*
+		 * images
+		 */
 		
 		HashMap<String,String> id_urls = new HashMap<String,String>();
 		id_urls = getImageURLs(conn);
@@ -49,7 +75,7 @@ public class TcorsInstagramUtils {
 			String fileURL = entry.getValue();
 			if (!fileURL.isEmpty()) {
 				String fileName = parseFileName(fileURL);
-				destinationFile = "/Users/karhai/tmp/instagram_pix/" + fileName;
+				destinationFile = destination_directory + fileName;
 				try {
 					saveImage(fileURL, destinationFile);
 				} catch (FileNotFoundException f) {
@@ -62,17 +88,45 @@ public class TcorsInstagramUtils {
 			if(++counter % 100 == 0) System.out.println("Count:" + counter);
 		}
 		
-		// TODO add function to delete URL of files not found
+		for(String id : bad_urls) {
+			id_urls.remove(id);
+		}
 		
 		updateStorePicture(conn, id_urls);
 		System.out.println("Pau!");
+		
+		/*
+		 * user bios
+		 */
+		
+//		Token secretToken = getSecretToken();
+//		Instagram instagram = new Instagram(secretToken);
+//		updateUsers(conn, instagram);
+//		System.out.println("Pau!");
+	}
+	
+	private static Properties getProps() {
+		Properties prop = new Properties();
+		try {
+			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream("jInstagram.properties");
+			prop.load(in);
+		} catch (IOException e) {
+			// log.error(e.toString());
+		}
+		return prop;
+	}
+	
+	private static Token getSecretToken() {
+		Properties iProp = getProps();
+		Token secretToken = new Token(iProp.getProperty("oauth.accessToken"),null);
+		return secretToken;
 	}
 	
 	private static String parseFileName(String url) {
 		return url.substring(url.lastIndexOf("/") + 1);
 	}
 	
-	private static HashMap<String,String> getImageURLs(Connection conn) throws SQLException {
+	private static HashMap<String,String> getImageURLs(Connection conn) {
 		
 		System.out.println("Getting image URLs...");
 		HashMap<String,String> id_urls = new HashMap<String,String>();
@@ -88,14 +142,14 @@ public class TcorsInstagramUtils {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			ps.close();
+			if (ps != null) try { ps.close(); } catch (SQLException s) { };
 		}
 		
 		System.out.println("Found:" + id_urls.size());
 		return id_urls;
 	}
 	
-	private static void updateStorePicture(Connection conn, HashMap<String,String> id_urls) throws SQLException {
+	private static void updateStorePicture(Connection conn, HashMap<String,String> id_urls) {
 		
 		System.out.println("Updating DB...");
 		PreparedStatement ps = null;
@@ -111,7 +165,7 @@ public class TcorsInstagramUtils {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			ps.close();
+			if (ps != null) try { ps.close(); } catch (SQLException s) { };
 		}
 	}
 	
@@ -133,4 +187,83 @@ public class TcorsInstagramUtils {
 	}
 	
 	// TODO update profile bios
+	
+	private static void updateUsers(Connection conn, Instagram inst) {
+		List<String> user_ids = new ArrayList<String>();
+		List<UserInfoData> user_info_list = new ArrayList<UserInfoData>();
+		user_ids = getUserIds(conn);
+		user_info_list = getUserInfo(inst, user_ids);
+		updateUser(user_info_list, conn);
+	}
+	
+	private static List<String> getUserIds(Connection conn) {
+		System.out.println("Getting user IDs...");
+		List<String> user_ids = new ArrayList<String>();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = conn.prepareStatement(get_user_IDs);
+			rs = ps.executeQuery();
+			
+			while(rs.next()) {
+				user_ids.add(rs.getString("id"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (rs != null) try { rs.close(); } catch (SQLException s) { };
+			if (ps != null) try { ps.close(); } catch (SQLException s) { };
+		}
+		
+		System.out.println("Found:" + user_ids.size());
+		return user_ids;
+	}
+	
+	private static List<UserInfoData> getUserInfo(Instagram inst, List<String> user_ids) {
+		
+		System.out.println("Getting user info...");
+		UserInfoData userData = null;
+		List<UserInfoData> user_info_list = new ArrayList<UserInfoData>();
+		
+		for (String id : user_ids) {
+			try {
+				UserInfo userInfo = inst.getUserInfo(id);
+				userData = userInfo.getData();
+				user_info_list.add(userData);
+			} catch (InstagramException i) {
+				
+			}
+		}
+		System.out.println("Found:" + user_info_list.size());
+		return user_info_list;
+	}
+	
+	private static void updateUser(List<UserInfoData> user_data, Connection conn) {
+		
+		System.out.println("Updating user...");
+		PreparedStatement ps = null;
+		try {
+			ps = conn.prepareStatement(update_user_info);
+			for (UserInfoData user : user_data) {
+				String id = user.getId();
+				String bio = user.getBio();
+				int followedBy = user.getCounts().getFollwed_by();
+				int follows = user.getCounts().getFollows();
+				// System.out.println("user:" + id + " " + bio + " " + followedBy + " " + follows);
+				
+				ps.setString(1, bio);
+				ps.setInt(2, follows);
+				ps.setInt(3, followedBy);
+				ps.setString(4, id);
+				
+				ps.addBatch();
+			}
+			
+			ps.executeBatch();
+		} catch (SQLException e) {
+			
+		} finally {
+			if (ps != null) try { ps.close(); } catch (SQLException s) { }
+		}	
+	}
 }
