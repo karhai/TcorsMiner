@@ -23,6 +23,10 @@ import org.jinstagram.exceptions.InstagramException;
 
 import edu.usc.tcors.utils.TcorsMinerUtils;
 
+/*
+ * command line execution: java -cp TcorsMiner.jar edu.usc.tcors.TcorsInstagramScraper
+ */
+
 public class TcorsInstagramScraper {
 	
 	final String latest_id_sql = "SELECT min_id " +

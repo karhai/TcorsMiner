@@ -29,7 +29,7 @@ public class TcorsInstagramUtils {
 	final static String get_file_URLs = "SELECT id, url " +
 			"FROM instagram " + 
 			"WHERE storePicture = 0 " + 
-			"LIMIT 1000";
+			"LIMIT 10000";
 	
 	final static String update_file_URLs = "UPDATE instagram " +
 			"SET storePicture = 1 " +
@@ -48,7 +48,9 @@ public class TcorsInstagramUtils {
 			"SET bio = ?, follows = ?, followedBy = ? " +
 			"WHERE id = ?";
 	
-	final static String destination_directory = "/Users/karhai/tmp/instagram_pix/";
+	// TODO get a generic version
+	// final static String destination_directory = "/Users/karhai/tmp/instagram_pix/";
+	final static String destination_directory = "c:\\Users\\tcorstwitter\\Documents\\instagram_images\\";
 	
 	public static void main(String[] args) throws Exception {
 		String destinationFile = "";
@@ -80,7 +82,8 @@ public class TcorsInstagramUtils {
 					saveImage(fileURL, destinationFile);
 				} catch (FileNotFoundException f) {
 					bad_urls.add(key);
-					f.printStackTrace();
+					System.out.println("Could not find file:" + fileURL);
+					// f.printStackTrace();
 				}
 			} else {
 				bad_urls.add(key);
@@ -231,7 +234,7 @@ public class TcorsInstagramUtils {
 				userData = userInfo.getData();
 				user_info_list.add(userData);
 			} catch (InstagramException i) {
-				
+				i.printStackTrace();
 			}
 		}
 		System.out.println("Found:" + user_info_list.size());
