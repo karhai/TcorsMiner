@@ -29,10 +29,14 @@ public class TcorsInstagramUtils {
 	final static String get_file_URLs = "SELECT id, url " +
 			"FROM instagram " + 
 			"WHERE storePicture = 0 " + 
-			"LIMIT 10000";
+			"LIMIT 1000";
 	
 	final static String update_file_URLs = "UPDATE instagram " +
 			"SET storePicture = 1 " +
+			"WHERE id = ?";
+	
+	final static String update_bad_URLs = "UPDATE instagram " +
+			"SET storePicture = -1 " +
 			"WHERE id = ?";
 	
 	// TODO is there a better check for profiles that need updates?
@@ -53,7 +57,6 @@ public class TcorsInstagramUtils {
 	final static String destination_directory = "c:\\Users\\tcorstwitter\\Documents\\instagram_images\\";
 	
 	public static void main(String[] args) throws Exception {
-		String destinationFile = "";
 		
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		Connection conn = tmu.getDBConn("configuration.properties");
@@ -62,40 +65,10 @@ public class TcorsInstagramUtils {
 		 * images
 		 */
 		
-		HashMap<String,String> id_urls = new HashMap<String,String>();
-		id_urls = getImageURLs(conn);
-		
-//		for(Map.Entry<String,String> entry : id_urls.entrySet()) {
-//			System.out.println("id:" + entry.getKey() + " url:" + entry.getValue());
-//		}
-		
-		System.out.println("Getting images...");
-		int counter = 0;
-		List<String> bad_urls = new ArrayList<String>();
-		for(Map.Entry<String,String> entry : id_urls.entrySet()) {
-			String key = entry.getKey();
-			String fileURL = entry.getValue();
-			if (!fileURL.isEmpty()) {
-				String fileName = parseFileName(fileURL);
-				destinationFile = destination_directory + fileName;
-				try {
-					saveImage(fileURL, destinationFile);
-				} catch (FileNotFoundException f) {
-					bad_urls.add(key);
-					System.out.println("Could not find file:" + fileURL);
-					// f.printStackTrace();
-				}
-			} else {
-				bad_urls.add(key);
-			}
-			if(++counter % 100 == 0) System.out.println("Count:" + counter);
+		for (int x = 0; x < 100; x++) {
+			getImages(conn);
 		}
 		
-		for(String id : bad_urls) {
-			id_urls.remove(id);
-		}
-		
-		updateStorePicture(conn, id_urls);
 		System.out.println("Pau!");
 		
 		/*
@@ -107,6 +80,8 @@ public class TcorsInstagramUtils {
 //		updateUsers(conn, instagram);
 //		System.out.println("Pau!");
 	}
+
+	// general properties
 	
 	private static Properties getProps() {
 		Properties prop = new Properties();
@@ -125,8 +100,52 @@ public class TcorsInstagramUtils {
 		return secretToken;
 	}
 	
+	// get images
+	
 	private static String parseFileName(String url) {
 		return url.substring(url.lastIndexOf("/") + 1);
+	}
+	
+	private static void getImages(Connection conn) {
+		String destinationFile = "";
+		HashMap<String,String> id_urls = new HashMap<String,String>();
+		id_urls = getImageURLs(conn);
+		
+//		for(Map.Entry<String,String> entry : id_urls.entrySet()) {
+//			System.out.println("id:" + entry.getKey() + " url:" + entry.getValue());
+//		}
+		
+		System.out.println("Getting images...");
+		int counter = 0;
+		List<String> bad_urls = new ArrayList<String>();
+		
+		for(Map.Entry<String,String> entry : id_urls.entrySet()) {
+			String key = entry.getKey();
+			String fileURL = entry.getValue();
+			if (!fileURL.isEmpty()) {
+				String fileName = parseFileName(fileURL);
+				destinationFile = destination_directory + fileName;
+				try {
+					saveImage(fileURL, destinationFile);
+				} catch (FileNotFoundException f) {
+					bad_urls.add(key);
+					System.out.println("Could not find file:" + fileURL);
+					// f.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} else {
+				bad_urls.add(key);
+			}
+			if(++counter % 100 == 0) System.out.println("Count:" + counter);
+		}
+		
+		for(String id : bad_urls) {
+			id_urls.remove(id);
+		}
+		
+		updateBadURLs(conn, bad_urls);
+		updateStorePicture(conn, id_urls);
 	}
 	
 	private static HashMap<String,String> getImageURLs(Connection conn) {
@@ -160,6 +179,25 @@ public class TcorsInstagramUtils {
 			ps = conn.prepareStatement(update_file_URLs);
 			for(Map.Entry<String,String> entry : id_urls.entrySet()) {
 				String id = entry.getKey();
+				ps.setString(1, id);
+				ps.addBatch();
+			}
+			
+			ps.executeBatch();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (ps != null) try { ps.close(); } catch (SQLException s) { };
+		}
+	}
+	
+	private static void updateBadURLs(Connection conn, List<String> bad_urls) {
+		
+		System.out.println("Updating bad URLs...");
+		PreparedStatement ps = null;
+		try {
+			ps = conn.prepareStatement(update_bad_URLs);
+			for(String id : bad_urls) {
 				ps.setString(1, id);
 				ps.addBatch();
 			}
