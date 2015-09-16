@@ -65,29 +65,32 @@ public class TcorsInstagramUtils {
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		Connection conn = tmu.getDBConn("configuration.properties");
 		
-		/*
-		 * user bios
-		 */
-		
-		if (args[0] == "users") {
-			Token secretToken = getSecretToken();
-			Instagram instagram = new Instagram(secretToken);
-			updateUsers(conn, instagram);
-		}
-		
-		/*
-		 * images
-		 */
-		
-		if (args[0] == "images") {
-			int loops = 1;
-			if (args[1] != null) loops = Integer.parseInt(args[1]);
-			for (int x = 0; x < loops; x++) {
-				getImages(conn);
+		if (args.length > 0) {
+			
+			/*
+			 * user bios
+			 */
+			
+			if (args[0].equals("users")) {
+				Token secretToken = getSecretToken();
+				Instagram instagram = new Instagram(secretToken);
+				updateUsers(conn, instagram);
+			}
+			
+			/*
+			 * images
+			 */
+			
+			if (args[0].equals("images")) {
+				int loops = 1;
+				if (args[1] != null) loops = Integer.parseInt(args[1]);
+				for (int x = 0; x < loops; x++) {
+					getImages(conn);
+				}
 			}
 		}
-		
-		System.out.println("Pau!");
+			
+			System.out.println("Pau!");
 		
 	}
 
