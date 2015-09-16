@@ -24,6 +24,10 @@ import org.jinstagram.exceptions.InstagramException;
 
 import edu.usc.tcors.TcorsTwitterStream;
 
+/*
+ * command line execution: java -cp TcorsMiner.jar edu.usc.tcors.utils.TcorsInstagramUtils [users/images] [number of 1000 images] 
+ */
+
 public class TcorsInstagramUtils {
 
 	final static String get_file_URLs = "SELECT id, url " +
@@ -62,23 +66,29 @@ public class TcorsInstagramUtils {
 		Connection conn = tmu.getDBConn("configuration.properties");
 		
 		/*
+		 * user bios
+		 */
+		
+		if (args[0] == "users") {
+			Token secretToken = getSecretToken();
+			Instagram instagram = new Instagram(secretToken);
+			updateUsers(conn, instagram);
+		}
+		
+		/*
 		 * images
 		 */
 		
-		for (int x = 0; x < 100; x++) {
-			getImages(conn);
+		if (args[0] == "images") {
+			int loops = 1;
+			if (args[1] != null) loops = Integer.parseInt(args[1]);
+			for (int x = 0; x < loops; x++) {
+				getImages(conn);
+			}
 		}
 		
 		System.out.println("Pau!");
 		
-		/*
-		 * user bios
-		 */
-		
-//		Token secretToken = getSecretToken();
-//		Instagram instagram = new Instagram(secretToken);
-//		updateUsers(conn, instagram);
-//		System.out.println("Pau!");
 	}
 
 	// general properties
