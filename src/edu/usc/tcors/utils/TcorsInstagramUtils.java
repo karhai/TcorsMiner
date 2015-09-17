@@ -20,6 +20,7 @@ import org.jinstagram.Instagram;
 import org.jinstagram.auth.model.Token;
 import org.jinstagram.entity.users.basicinfo.UserInfo;
 import org.jinstagram.entity.users.basicinfo.UserInfoData;
+import org.jinstagram.exceptions.InstagramBadRequestException;
 import org.jinstagram.exceptions.InstagramException;
 
 import edu.usc.tcors.TcorsTwitterStream;
@@ -51,6 +52,10 @@ public class TcorsInstagramUtils {
 			"AND followedBy IS NULL " +
 			"AND bio IS NULL " +
 			"LIMIT 1000";
+	
+	final static String update_bad_users = "UPDATE instagram_users " +
+			"SET follows = -1, followedBy = -1 " +
+			"WHERE id = ?";
 	
 	final static String update_user_info = "UPDATE instagram_users " +
 			"SET bio = ?, follows = ?, followedBy = ? " +
@@ -240,13 +245,13 @@ public class TcorsInstagramUtils {
 		os.close();
 	}
 	
-	// TODO update profile bios
+	// update profile bios
 	
 	private static void updateUsers(Connection conn, Instagram inst) {
 		List<String> user_ids = new ArrayList<String>();
 		List<UserInfoData> user_info_list = new ArrayList<UserInfoData>();
 		user_ids = getUserIds(conn);
-		user_info_list = getUserInfo(inst, user_ids);
+		user_info_list = getUserInfo(conn, inst, user_ids);
 		updateUser(user_info_list, conn);
 	}
 	
@@ -273,23 +278,50 @@ public class TcorsInstagramUtils {
 		return user_ids;
 	}
 	
-	private static List<UserInfoData> getUserInfo(Instagram inst, List<String> user_ids) {
+	private static List<UserInfoData> getUserInfo(Connection conn, Instagram inst, List<String> user_ids) {
 		
 		System.out.println("Getting user info...");
 		UserInfoData userData = null;
 		List<UserInfoData> user_info_list = new ArrayList<UserInfoData>();
+		List<String> bad_users = new ArrayList<String>();
 		
 		for (String id : user_ids) {
 			try {
 				UserInfo userInfo = inst.getUserInfo(id);
 				userData = userInfo.getData();
 				user_info_list.add(userData);
+			} catch (InstagramBadRequestException b) {
+				bad_users.add(id);
+				System.out.println("Bad user:" + id);
 			} catch (InstagramException i) {
 				i.printStackTrace();
 			}
 		}
+		
+		// update DB with bad users
+		updateBadIds(conn, bad_users);
+		
 		System.out.println("Found:" + user_info_list.size());
 		return user_info_list;
+	}
+	
+	private static void updateBadIds(Connection conn, List<String> bad_users) {
+		System.out.println("Updating bad users...");
+		
+		PreparedStatement ps = null;
+		try {
+			ps = conn.prepareStatement(update_bad_users);
+			for (String id : bad_users) {
+				ps.setString(1, id);
+				ps.addBatch();
+			}
+			
+			ps.executeBatch();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (ps != null) try { ps.close(); } catch (SQLException s) { }
+		}
 	}
 	
 	private static void updateUser(List<UserInfoData> user_data, Connection conn) {
@@ -315,7 +347,7 @@ public class TcorsInstagramUtils {
 			
 			ps.executeBatch();
 		} catch (SQLException e) {
-			
+			e.printStackTrace();
 		} finally {
 			if (ps != null) try { ps.close(); } catch (SQLException s) { }
 		}	
