@@ -332,6 +332,12 @@ public class TcorsTwitterUtils {
 		}
 	}
 	
+	/*
+	 * 
+	 * TODO NEED UPDATES FOR GEOLOCATION
+	 * 
+	 */
+	
 	private void storeTweetData(Connection conn, Status status) throws SQLException {
 		String sql = "INSERT IGNORE INTO tweets (id, createdAt, text, userId, isRetweet, retweets)" +
 				"VALUES (?,?,?,?,?,?)";

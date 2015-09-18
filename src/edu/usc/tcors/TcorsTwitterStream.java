@@ -161,8 +161,8 @@ public class TcorsTwitterStream {
 	 */
 	
 	private void storeTweetData(Connection conn, Status status) throws SQLException {
-		String sql = "INSERT INTO tweets (id, createdAt, text, userId, isRetweet)" +
-				"VALUES (?,?,?,?,?)";
+		String sql = "INSERT INTO tweets (id, createdAt, text, userId, isRetweet, latitude, longitude)" +
+				"VALUES (?,?,?,?,?,?,?)";
 		PreparedStatement ps = null;
 		
 		try {
@@ -172,6 +172,13 @@ public class TcorsTwitterStream {
 			ps.setString(3, status.getText());
 			ps.setString(4, String.valueOf(status.getUser().getId()));
 			ps.setBoolean(5, status.isRetweet());
+			if (status.getGeoLocation() != null) {
+				ps.setDouble(6, status.getGeoLocation().getLatitude());
+				ps.setDouble(7, status.getGeoLocation().getLongitude());
+			} else {
+				ps.setDouble(6, 0);
+				ps.setDouble(7, 0);
+			}
 			
 			ps.execute();
 			System.out.println("Stored tweet " + status.getId());
