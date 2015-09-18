@@ -33,8 +33,8 @@ public class TcorsInstagramScraper {
 			"FROM instagram_terms " +
 			"WHERE search_term = ?";
 	
-	final String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture) " +
-			"VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	final String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture, latitude, longitude) " +
+			"VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	
 	final String comments_sql = "REPLACE INTO instagram_comments (id, parent_id, username, comment, createdTime) " +
 			"VALUE (?, ?, ?, ?, ?)";
@@ -247,8 +247,12 @@ public class TcorsInstagramScraper {
 		int likes = mfd.getLikes().getCount();
 		Location location = mfd.getLocation();
 		String location_name = "";
+		double lat = 0;
+		double lon = 0;
 		if (location != null) {
 			location_name = location.getName();
+			lat = location.getLatitude();
+			lon = location.getLongitude();
 		}
 		
 		User user = mfd.getUser();
@@ -266,6 +270,8 @@ public class TcorsInstagramScraper {
 		instagram_ps.setString(7, url);
 		instagram_ps.setString(8, location_name);
 		instagram_ps.setInt(9, 0);
+		instagram_ps.setDouble(10, lat);
+		instagram_ps.setDouble(11, lon);
 		
 		instagram_ps.addBatch();
 		
