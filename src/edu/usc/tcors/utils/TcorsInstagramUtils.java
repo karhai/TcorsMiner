@@ -44,8 +44,6 @@ public class TcorsInstagramUtils {
 			"SET storePicture = -1 " +
 			"WHERE id = ?";
 	
-	// TODO is there a better check for profiles that need updates?
-	
 	final static String get_user_IDs = "SELECT id " +
 			"FROM instagram_users " +
 			"WHERE follows IS NULL " +

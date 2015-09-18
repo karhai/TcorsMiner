@@ -33,8 +33,8 @@ public class TcorsInstagramScraper {
 			"FROM instagram_terms " +
 			"WHERE search_term = ?";
 	
-	final String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location) " +
-			"VALUE (?, ?, ?, ?, ?, ?, ?, ?)";
+	final String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture) " +
+			"VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	
 	final String comments_sql = "REPLACE INTO instagram_comments (id, parent_id, username, comment, createdTime) " +
 			"VALUE (?, ?, ?, ?, ?)";
@@ -265,6 +265,7 @@ public class TcorsInstagramScraper {
 		instagram_ps.setInt(6, comments_count);
 		instagram_ps.setString(7, url);
 		instagram_ps.setString(8, location_name);
+		instagram_ps.setInt(9, 0);
 		
 		instagram_ps.addBatch();
 		
