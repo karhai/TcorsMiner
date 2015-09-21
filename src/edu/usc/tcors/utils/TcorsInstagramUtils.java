@@ -68,6 +68,8 @@ public class TcorsInstagramUtils {
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		Connection conn = tmu.getDBConn("configuration.properties");
 		
+		// TODO setup timed retrievals for images and bios. use hack code for now
+		
 		if (args.length > 0) {
 			
 			/*
@@ -91,9 +93,29 @@ public class TcorsInstagramUtils {
 					getImages(conn);
 				}
 			}
+			
+			/*
+			 * user bios recovery hack. 
+			 */
+			
+			if (args[0].equals("recovery")) {
+				while(true) {
+					Token secretToken = getSecretToken();
+					Instagram instagram = new Instagram(secretToken);
+					
+					updateUsers(conn, instagram);
+					
+					try {
+						System.out.println("Taking a 20 minute nap...\n\n");
+						Thread.sleep(1200000); // 20 minute wait
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
 		}
 			
-			System.out.println("Pau!");
+		System.out.println("Pau!");
 		
 	}
 
