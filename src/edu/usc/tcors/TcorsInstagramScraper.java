@@ -41,6 +41,8 @@ public class TcorsInstagramScraper {
 	/*
 	 * TODO consider using REPLACE, which would force repopulation of user meta-data
 	 * but at the cost of spending quota
+	 * 
+	 * Proper fix is probably to remove the 10 hardcoded pagination retrievals for the exact number
 	 */
 	final String users_sql = "INSERT IGNORE INTO instagram_users (id, fullname, bio, username) " +
 			"VALUE (?, ?, ?, ?)";
