@@ -44,6 +44,7 @@ public class TcorsInstagramUtils {
 			"SET storePicture = -1 " +
 			"WHERE id = ?";
 	
+	// TODO we do not update user meta-data after it is populated
 	final static String get_user_IDs = "SELECT id " +
 			"FROM instagram_users " +
 			"WHERE follows IS NULL " +
@@ -61,14 +62,15 @@ public class TcorsInstagramUtils {
 	
 	// TODO get a generic version
 	// final static String destination_directory = "/Users/karhai/tmp/instagram_pix/";
-	final static String destination_directory = "c:\\Users\\tcorstwitter\\Documents\\instagram_images\\";
+	// final static String destination_directory = "c:\\Users\\tcorstwitter\\Documents\\instagram_images\\";
+	final static String destination_directory = "g:\\tcorstwitter\\Documents\\instagram_images\\";
 	
 	public static void main(String[] args) throws Exception {
 		
+		// hacked up code for quick fixes
+		
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		Connection conn = tmu.getDBConn("configuration.properties");
-		
-		// TODO setup timed retrievals for images and bios. use hack code for now
 		
 		if (args.length > 0) {
 			
@@ -95,7 +97,7 @@ public class TcorsInstagramUtils {
 			}
 			
 			/*
-			 * user bios recovery hack. 
+			 * user bios
 			 */
 			
 			if (args[0].equals("recovery")) {
@@ -132,7 +134,7 @@ public class TcorsInstagramUtils {
 		return prop;
 	}
 	
-	private static Token getSecretToken() {
+	public static Token getSecretToken() {
 		Properties iProp = getProps();
 		Token secretToken = new Token(iProp.getProperty("oauth.accessToken"),null);
 		return secretToken;
@@ -144,7 +146,7 @@ public class TcorsInstagramUtils {
 		return url.substring(url.lastIndexOf("/") + 1);
 	}
 	
-	private static void getImages(Connection conn) {
+	public static void getImages(Connection conn) {
 		String destinationFile = "";
 		HashMap<String,String> id_urls = new HashMap<String,String>();
 		id_urls = getImageURLs(conn);
@@ -167,7 +169,7 @@ public class TcorsInstagramUtils {
 					saveImage(fileURL, destinationFile);
 				} catch (FileNotFoundException f) {
 					bad_urls.add(key);
-					System.out.println("Could not find file:" + fileURL);
+					System.out.println("Could not find file:" + fileName);
 					// f.printStackTrace();
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -267,7 +269,7 @@ public class TcorsInstagramUtils {
 	
 	// update profile bios
 	
-	private static void updateUsers(Connection conn, Instagram inst) {
+	public static void updateUsers(Connection conn, Instagram inst) {
 		List<String> user_ids = new ArrayList<String>();
 		List<UserInfoData> user_info_list = new ArrayList<UserInfoData>();
 		user_ids = getUserIds(conn);

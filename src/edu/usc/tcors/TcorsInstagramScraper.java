@@ -1,15 +1,12 @@
 package edu.usc.tcors;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Properties;
-
 import org.jinstagram.Instagram;
 import org.jinstagram.auth.model.Token;
 import org.jinstagram.entity.comments.CommentData;
@@ -21,6 +18,7 @@ import org.jinstagram.entity.users.feed.MediaFeed;
 import org.jinstagram.entity.users.feed.MediaFeedData;
 import org.jinstagram.exceptions.InstagramException;
 
+import edu.usc.tcors.utils.TcorsInstagramUtils;
 import edu.usc.tcors.utils.TcorsMinerUtils;
 
 /*
@@ -33,12 +31,17 @@ public class TcorsInstagramScraper {
 			"FROM instagram_terms " +
 			"WHERE search_term = ?";
 	
+	// TODO this forces redownloads of existing images, with the benefit of updated post meta-data. Better option?
 	final String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture, latitude, longitude) " +
 			"VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	
 	final String comments_sql = "REPLACE INTO instagram_comments (id, parent_id, username, comment, createdTime) " +
 			"VALUE (?, ?, ?, ?, ?)";
 	
+	/*
+	 * TODO consider using REPLACE, which would force repopulation of user meta-data
+	 * but at the cost of spending quota
+	 */
 	final String users_sql = "INSERT IGNORE INTO instagram_users (id, fullname, bio, username) " +
 			"VALUE (?, ?, ?, ?)";
 	
@@ -48,6 +51,7 @@ public class TcorsInstagramScraper {
 	private static Connection conn;
 	
 	final int returnSize = 33;
+	final int loop_reset = 4; // 1 = 5 min
 
 	private Connection getConnection() {
 		return TcorsInstagramScraper.conn;
@@ -59,6 +63,7 @@ public class TcorsInstagramScraper {
 	
 	public static void main(String[] args) throws InstagramException {
 		
+		int delayed_loop = 0;
 		while (true) {
 			
 			TcorsMinerUtils tmu = new TcorsMinerUtils();
@@ -70,11 +75,32 @@ public class TcorsInstagramScraper {
 			
 			TcorsInstagramScraper tis = new TcorsInstagramScraper();
 		
+			Token secretToken = TcorsInstagramUtils.getSecretToken();
+			Instagram instagram = new Instagram(secretToken);
+			
+			/*
+			 * run the historical scrape of keywords every 5 minutes
+			 */
 			try {
-				tis.go();
+				tis.go(instagram);
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
+			
+			/*
+			 * run the image download immediately after
+			 */
+
+			TcorsInstagramUtils.getImages(tis.getConnection());
+			
+			/*
+			 * run the user bios scrape every 20 minutes
+			 */
+			if (++delayed_loop >= 4) {
+				delayed_loop = 0;
+				TcorsInstagramUtils.updateUsers(tis.getConnection(), instagram);
+			}
+			
 			
 			try {
 				tis.getConnection().close();
@@ -91,30 +117,7 @@ public class TcorsInstagramScraper {
 		}
 	}
 	
-	/*
-	 * TODO refactor out into the utilities
-	 */
-	
-	private Properties getProps() {
-		Properties prop = new Properties();
-		try {
-			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream("jInstagram.properties");
-			prop.load(in);
-		} catch (IOException e) {
-			// log.error(e.toString());
-		}
-		return prop;
-	}
-	
-	private Token getSecretToken() {
-		Properties iProp = getProps();
-		Token secretToken = new Token(iProp.getProperty("oauth.accessToken"),null);
-		return secretToken;
-	}
-	
-	private void go() throws SQLException {
-		Token secretToken = getSecretToken();
-		Instagram instagram = new Instagram(secretToken);
+	private void go(Instagram instagram) throws SQLException {
 		
 		// get search terms
 //		String[] test = new String[]{"ecigarette","ecig","e-hookah"};
@@ -344,7 +347,7 @@ public class TcorsInstagramScraper {
 				recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
 			}
 			
-			// TODO the above/below if loops need to be cleaned up
+			// TODO the above/below if loops might need to be cleaned up
 			int counter = 1;
 			
 			limit = mediaFeed.getRemainingLimitStatus();
