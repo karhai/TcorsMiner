@@ -6,7 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+
 import org.jinstagram.Instagram;
 import org.jinstagram.auth.model.Token;
 import org.jinstagram.entity.comments.CommentData;
@@ -111,7 +114,8 @@ public class TcorsInstagramScraper {
 			}
 			
 			try {
-				System.out.println("Taking a 5 minute nap...\n\n");
+				DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+				System.out.println(LocalDateTime.now().format(dtf) + "... Taking a 5 minute nap...\n\n");
 				Thread.sleep(300000); // 5 minute wait between ids chunks
 			} catch (InterruptedException e) {
 				e.printStackTrace();
