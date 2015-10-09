@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -172,7 +173,9 @@ public class TcorsInstagramUtils {
 					System.out.println("Could not find file:" + fileName);
 					// f.printStackTrace();
 				} catch (IOException e) {
+					System.out.println("IOException");
 					e.printStackTrace();
+					bad_urls.add(key);
 				}
 			} else {
 				bad_urls.add(key);
@@ -253,8 +256,13 @@ public class TcorsInstagramUtils {
 	private static void saveImage(String imageURL, String destinationFile) throws IOException, FileNotFoundException {
 		
 		URL url = new URL(imageURL);
-		InputStream is = url.openStream();
-		OutputStream os = new FileOutputStream(destinationFile);
+		URLConnection urlConn = url.openConnection();
+		urlConn.setConnectTimeout(5000);
+		urlConn.setReadTimeout(10000);
+		// InputStream is = url.openStream();
+		InputStream is = urlConn.getInputStream();
+		// OutputStream os = new FileOutputStream(destinationFile);
+		FileOutputStream os = new FileOutputStream(destinationFile);
 		
 		byte[] b = new byte[2048];
 		int length;
