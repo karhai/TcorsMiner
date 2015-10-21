@@ -116,3 +116,8 @@ EcigsSaveLives
 EcigsSavesLives
 # vapecon -- added 10/8/2015
 vapecon
+# added 10/14/2015
+fresh empire
+freshempire
+camel crush bold
+camelcrushbold

@@ -11,7 +11,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +66,8 @@ public class TcorsInstagramUtils {
 	// TODO get a generic version
 	// final static String destination_directory = "/Users/karhai/tmp/instagram_pix/";
 	// final static String destination_directory = "c:\\Users\\tcorstwitter\\Documents\\instagram_images\\";
-	final static String destination_directory = "g:\\tcorstwitter\\Documents\\instagram_images\\";
+	// final static String destination_directory = "g:\\tcorstwitter\\Documents\\instagram_images\\";
+	final static String destination_directory = "h:\\tcorstwitter\\Documents\\instagram_images\\";
 	
 	public static void main(String[] args) throws Exception {
 		
@@ -165,7 +168,8 @@ public class TcorsInstagramUtils {
 			String fileURL = entry.getValue();
 			if (!fileURL.isEmpty()) {
 				String fileName = parseFileName(fileURL);
-				destinationFile = destination_directory + fileName;
+				String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+				destinationFile = destination_directory + today + "\\" + fileName;
 				try {
 					saveImage(fileURL, destinationFile);
 				} catch (FileNotFoundException f) {
