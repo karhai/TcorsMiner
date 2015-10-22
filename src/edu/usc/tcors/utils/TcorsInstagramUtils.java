@@ -1,5 +1,6 @@
 package edu.usc.tcors.utils;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -65,7 +66,6 @@ public class TcorsInstagramUtils {
 	
 	// TODO get a generic version
 	// final static String destination_directory = "/Users/karhai/tmp/instagram_pix/";
-	// final static String destination_directory = "c:\\Users\\tcorstwitter\\Documents\\instagram_images\\";
 	// final static String destination_directory = "g:\\tcorstwitter\\Documents\\instagram_images\\";
 	final static String destination_directory = "h:\\tcorstwitter\\Documents\\instagram_images\\";
 	
@@ -152,6 +152,7 @@ public class TcorsInstagramUtils {
 	
 	public static void getImages(Connection conn) {
 		String destinationFile = "";
+		String parentDir = "";
 		HashMap<String,String> id_urls = new HashMap<String,String>();
 		id_urls = getImageURLs(conn);
 		
@@ -169,13 +170,22 @@ public class TcorsInstagramUtils {
 			if (!fileURL.isEmpty()) {
 				String fileName = parseFileName(fileURL);
 				String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-				destinationFile = destination_directory + today + "\\" + fileName;
+				
+				parentDir = destination_directory + today + "\\";
+				destinationFile = parentDir + fileName;
+				
+				// parentDir = destination_directory + today + "/";
+				// destinationFile = parentDir + fileName;
+				
+				// check directory
+				checkDirectory(parentDir);
+				
 				try {
 					saveImage(fileURL, destinationFile);
 				} catch (FileNotFoundException f) {
 					bad_urls.add(key);
 					System.out.println("Could not find file:" + fileName);
-					// f.printStackTrace();
+					f.printStackTrace();
 				} catch (IOException e) {
 					System.out.println("IOException");
 					e.printStackTrace();
@@ -193,6 +203,15 @@ public class TcorsInstagramUtils {
 		
 		updateBadURLs(conn, bad_urls);
 		updateStorePicture(conn, id_urls);
+	}
+	
+	private static void checkDirectory(String destinationDir) {
+		File file = new File(destinationDir);
+		
+		if (!file.exists()) {
+			file.mkdir();
+			System.out.println("Created directory:" + file);
+		}
 	}
 	
 	private static HashMap<String,String> getImageURLs(Connection conn) {
