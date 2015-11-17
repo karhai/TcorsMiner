@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.Connection;
@@ -186,6 +187,10 @@ public class TcorsInstagramUtils {
 					bad_urls.add(key);
 					System.out.println("Could not find file:" + fileName);
 					f.printStackTrace();
+				} catch (SocketTimeoutException s) {
+					System.out.println("SocketTimeoutException. File:" + fileName);
+					// s.printStackTrace();
+					bad_urls.add(key);
 				} catch (IOException e) {
 					System.out.println("IOException");
 					e.printStackTrace();
