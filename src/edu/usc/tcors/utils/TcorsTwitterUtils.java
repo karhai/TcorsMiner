@@ -1,23 +1,34 @@
 package edu.usc.tcors.utils;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
+import twitter4j.FilterQuery;
 import twitter4j.IDs;
 import twitter4j.Paging;
 import twitter4j.Query;
 import twitter4j.QueryResult;
 import twitter4j.ResponseList;
+import twitter4j.StallWarning;
 import twitter4j.Status;
+import twitter4j.StatusDeletionNotice;
+import twitter4j.StatusListener;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+import twitter4j.TwitterStream;
+import twitter4j.TwitterStreamFactory;
 import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 import edu.usc.tcors.TcorsTwitterStream;
@@ -29,17 +40,17 @@ public class TcorsTwitterUtils {
 	public static void main(String[] args) {
 		
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
-		TcorsMinerUtils tmu = new TcorsMinerUtils();
-		Connection conn  = null;
-		try {
-			conn = tmu.getDBConn("configuration.properties");
-			
-			// maxId = 609485130428743680L
-			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
-			
-			// u.getTweetsByID(631411025993035776L, 631549675347152896L, conn);
-			
-			u.getUserHistoricalTweets(2231009702L, conn);
+//		TcorsMinerUtils tmu = new TcorsMinerUtils();
+//		Connection conn  = null;
+//		try {
+//			conn = tmu.getDBConn("configuration.properties");
+//			
+//			// maxId = 609485130428743680L
+//			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
+//			
+//			// u.getTweetsByID(631411025993035776L, 631549675347152896L, conn);
+//			
+//			u.getUserHistoricalTweets(2231009702L, conn);
 			
 //			// get follower IDs
 //			IDs followers = null;
@@ -50,11 +61,103 @@ public class TcorsTwitterUtils {
 //			// store profiles in DB
 //			u.storeUserDataFromList(conn, users);
 			
-		} catch (SQLException e) {
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//		}
+		
+		try {
+			u.getRandomTwitterUsers(100);
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
+	private void getRandomTwitterUsers(final int count) throws TwitterException {
+
+		
+		TwitterStream twitterStream = getStreamInstance();
+		StatusListener listener = new StatusListener() {
+			
+			HashMap<String, Long> results = new HashMap<String, Long>();
+			
+			public void onStatus(Status status) {
+				// System.out.println("@" + status.getUser().getScreenName() + " - " + status.getUser().getId());
+				if (results.size() < count) {
+					results.put(status.getUser().getScreenName(), status.getUser().getId());
+				} else {
+					try {
+						String output_file = "random_users.txt";
+						FileWriter fileWriter = new FileWriter(output_file);
+						BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+						
+						for (Map.Entry<String, Long> entry : results.entrySet()) {
+							bufferedWriter.write(entry.getKey() + "," + entry.getValue() + "\n");
+						}
+						
+						bufferedWriter.close();
+						
+						/*
+						 * Hack to allow user to break
+						 */
+						Thread.sleep(60000);
+						
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+
+			@Override
+			public void onException(Exception arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onDeletionNotice(StatusDeletionNotice arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onScrubGeo(long arg0, long arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onStallWarning(StallWarning arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onTrackLimitationNotice(int arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+		};
+		
+		twitterStream.addListener(listener);
+		twitterStream.sample("en");;
+	}
+	
+	/*
+	 * TODO: refactor
+	 */
+	
+	private TwitterStream getStreamInstance() {
+		ConfigurationBuilder twitterConf = getConf();
+		
+		TwitterStream twitterStream = new TwitterStreamFactory(twitterConf.build()).getInstance();
+		return twitterStream;
+	}
+		
 	private void getTweetsByID(long min_id, long max_id, Connection conn) throws SQLException {
 		
 		// open keywords.txt
