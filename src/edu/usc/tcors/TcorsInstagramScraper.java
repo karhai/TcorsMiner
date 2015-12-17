@@ -382,6 +382,8 @@ public class TcorsInstagramScraper {
 			System.out.println("mediaList size (x33):" + mediaList.size());
 		} catch (InstagramException e) {
 			e.printStackTrace();
+		} catch (IllegalStateException i) {
+			i.printStackTrace();
 		}
 		
 		return mediaList;
