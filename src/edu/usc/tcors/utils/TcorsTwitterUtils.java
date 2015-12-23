@@ -40,17 +40,17 @@ public class TcorsTwitterUtils {
 	public static void main(String[] args) {
 		
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
-//		TcorsMinerUtils tmu = new TcorsMinerUtils();
-//		Connection conn  = null;
-//		try {
-//			conn = tmu.getDBConn("configuration.properties");
-//			
-//			// maxId = 609485130428743680L
-//			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
-//			
-//			// u.getTweetsByID(631411025993035776L, 631549675347152896L, conn);
-//			
-//			u.getUserHistoricalTweets(2231009702L, conn);
+		TcorsMinerUtils tmu = new TcorsMinerUtils();
+		Connection conn  = null;
+		try {
+			conn = tmu.getDBConn("configuration.properties");
+			
+			// maxId = 609485130428743680L
+			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
+			
+			u.getTweetsByID(677450063266869248L, 677535156748570625L, conn);
+			
+			// u.getUserHistoricalTweets(2231009702L, conn);
 			
 //			// get follower IDs
 //			IDs followers = null;
@@ -61,16 +61,16 @@ public class TcorsTwitterUtils {
 //			// store profiles in DB
 //			u.storeUserDataFromList(conn, users);
 			
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
-		
-		try {
-			u.getRandomTwitterUsers(100);
-		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		
+//		try {
+//			u.getRandomTwitterUsers(100);
+//		} catch (TwitterException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 	
 	private void getRandomTwitterUsers(final int count) throws TwitterException {
@@ -175,6 +175,7 @@ public class TcorsTwitterUtils {
 			// u.search word with min and max
 			System.out.println("SEARCH FOR:" + word);
 			check = search(word, min_id, max_id, conn);
+			System.out.println("Finished current outside run... check = " + check);
 			
 			// if number is returned, wait 15 minutes, then run search with new maxId
 			while (check > 0L) {
@@ -188,6 +189,7 @@ public class TcorsTwitterUtils {
 				
 				// run search with same word, new maxId
 				check = search(word, min_id, check, conn);
+				System.out.println("Finished current inside run... check = " + check);
 			}
 		}
 	}
@@ -435,15 +437,9 @@ public class TcorsTwitterUtils {
 		}
 	}
 	
-	/*
-	 * 
-	 * TODO NEED UPDATES FOR GEOLOCATION
-	 * 
-	 */
-	
 	private void storeTweetData(Connection conn, Status status) throws SQLException {
-		String sql = "INSERT IGNORE INTO tweets (id, createdAt, text, userId, isRetweet, retweets)" +
-				"VALUES (?,?,?,?,?,?)";
+		String sql = "INSERT IGNORE INTO tweets (id, createdAt, text, userId, isRetweet, latitude, longitude)" +
+				"VALUES (?,?,?,?,?,?,?)";
 		PreparedStatement ps = null;
 		
 		try {
@@ -453,7 +449,13 @@ public class TcorsTwitterUtils {
 			ps.setString(3, status.getText());
 			ps.setString(4, String.valueOf(status.getUser().getId()));
 			ps.setBoolean(5, status.isRetweet());
-			ps.setInt(6, status.getRetweetCount());
+			if (status.getGeoLocation() != null) {
+				ps.setDouble(6, status.getGeoLocation().getLatitude());
+				ps.setDouble(7, status.getGeoLocation().getLongitude());
+			} else {
+				ps.setDouble(6, 0);
+				ps.setDouble(7, 0);
+			}
 			
 			ps.execute();
 				
