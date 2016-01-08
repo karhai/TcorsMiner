@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,8 +24,11 @@ import java.util.Properties;
 
 import org.jinstagram.Instagram;
 import org.jinstagram.auth.model.Token;
+import org.jinstagram.entity.tags.TagMediaFeed;
 import org.jinstagram.entity.users.basicinfo.UserInfo;
 import org.jinstagram.entity.users.basicinfo.UserInfoData;
+import org.jinstagram.entity.users.feed.MediaFeed;
+import org.jinstagram.entity.users.feed.MediaFeedData;
 import org.jinstagram.exceptions.InstagramBadRequestException;
 import org.jinstagram.exceptions.InstagramException;
 
@@ -120,6 +124,10 @@ public class TcorsInstagramUtils {
 					}
 				}
 			}
+			
+			if (args[0].equals("historical")) {
+				getHistorical("1092131227372782894","1092152938582321659");
+			}
 		}
 			
 		System.out.println("Pau!");
@@ -143,6 +151,90 @@ public class TcorsInstagramUtils {
 		Properties iProp = getProps();
 		Token secretToken = new Token(iProp.getProperty("oauth.accessToken"),null);
 		return secretToken;
+	}
+	
+	// get historical posts
+	// TODO: will be very dirty code
+	
+	public static void getHistorical(String min, String max) {
+		System.out.println("Getting historical data...");
+
+		TcorsMinerUtils tmu = new TcorsMinerUtils();
+		Connection conn;
+		try {
+			conn = tmu.getDBConn("configuration.properties");
+		} catch (SQLException s) {
+			s.printStackTrace();
+		}
+		
+		Token secretToken = getSecretToken();
+		Instagram instagram = new Instagram(secretToken);
+		
+		String[] terms = {"ecig"};
+//		try {
+//			terms = tmu.loadSearchTerms();
+//		} catch (IOException i) {
+//			
+//		}
+		
+		for (String term : terms) {
+			if (!term.contains("-") && !term.contains(" ")) {
+				List<MediaFeedData> mediaList = getPostsByTerm(instagram, term, min, max);
+			}
+		}
+
+	}
+	
+	public static List<MediaFeedData> getPostsByTerm(Instagram instagram, String term, String min, String max) {
+		TagMediaFeed mediaFeed = null;
+		List<MediaFeedData> mediaList = null;
+		
+		try {
+			mediaFeed = instagram.getRecentMediaTags(term, min, max, 33);
+			mediaList = mediaFeed.getData();
+		} catch (InstagramException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println("Step 1 size:" + mediaFeed.getData().size());
+		for (MediaFeedData mfd : mediaList) {
+			Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
+			System.out.println("id:" + mfd.getId() + " time:" + ts.toString());
+		}
+
+		if (mediaFeed.getPagination().hasNextPage() == false) {
+			System.out.println("SHOULD STOP NOW");
+		} else {
+		
+			long nextMax = Long.parseLong(mediaFeed.getPagination().getNextMaxId());
+			System.out.println("nextMax: " + nextMax);
+			MediaFeed recentMediaNextPage = null;
+			try {
+				recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
+			} catch (InstagramException e) {
+				e.printStackTrace();
+			}
+		
+			// loop
+
+			while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
+				for (MediaFeedData mfd : recentMediaNextPage.getData()) {
+					Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
+					System.out.println("id:" + mfd.getId() + " time:" + ts.toString());
+				}
+		
+				nextMax = Long.parseLong(recentMediaNextPage.getPagination().getNextMaxId());
+				System.out.println("next max:" + nextMax);
+				
+				try {
+					recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
+				} catch (InstagramException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return mediaList;
 	}
 	
 	// get images
@@ -391,7 +483,7 @@ public class TcorsInstagramUtils {
 			for (UserInfoData user : user_data) {
 				String id = user.getId();
 				String bio = user.getBio();
-				int followedBy = user.getCounts().getFollwed_by();
+				int followedBy = user.getCounts().getFollowedBy();
 				int follows = user.getCounts().getFollows();
 				// System.out.println("user:" + id + " " + bio + " " + followedBy + " " + follows);
 				
