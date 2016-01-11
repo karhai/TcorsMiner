@@ -24,6 +24,10 @@ import java.util.Properties;
 
 import org.jinstagram.Instagram;
 import org.jinstagram.auth.model.Token;
+import org.jinstagram.entity.comments.CommentData;
+import org.jinstagram.entity.common.Comments;
+import org.jinstagram.entity.common.Location;
+import org.jinstagram.entity.common.User;
 import org.jinstagram.entity.tags.TagMediaFeed;
 import org.jinstagram.entity.users.basicinfo.UserInfo;
 import org.jinstagram.entity.users.basicinfo.UserInfoData;
@@ -125,8 +129,12 @@ public class TcorsInstagramUtils {
 				}
 			}
 			
+			/*
+			 * recover missing historical data
+			 */
+			
 			if (args[0].equals("historical")) {
-				getHistorical("1092131227372782894","1092152938582321659");
+				getHistorical("1119358947686849757","1119696857996892744");
 			}
 		}
 			
@@ -156,11 +164,26 @@ public class TcorsInstagramUtils {
 	// get historical posts
 	// TODO: will be very dirty code
 	
+	final static String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture, latitude, longitude) " +
+			"VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	
+	final static String comments_sql = "REPLACE INTO instagram_comments (id, parent_id, username, comment, createdTime) " +
+			"VALUE (?, ?, ?, ?, ?)";
+	
+	/*
+	 * TODO consider using REPLACE, which would force repopulation of user meta-data
+	 * but at the cost of spending quota
+	 * 
+	 * Proper fix is probably to remove the 10 hardcoded pagination retrievals for the exact number
+	 */
+	final static String users_sql = "INSERT IGNORE INTO instagram_users (id, fullname, bio, username) " +
+			"VALUE (?, ?, ?, ?)";
+	
 	public static void getHistorical(String min, String max) {
 		System.out.println("Getting historical data...");
 
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
-		Connection conn;
+		Connection conn = null;
 		try {
 			conn = tmu.getDBConn("configuration.properties");
 		} catch (SQLException s) {
@@ -170,16 +193,53 @@ public class TcorsInstagramUtils {
 		Token secretToken = getSecretToken();
 		Instagram instagram = new Instagram(secretToken);
 		
-		String[] terms = {"ecig"};
-//		try {
-//			terms = tmu.loadSearchTerms();
-//		} catch (IOException i) {
-//			
-//		}
+//		String[] terms = {"ecigarette","ecigarettes"};
+		String[] terms = null;
+		try {
+			terms = tmu.loadSearchTerms();
+		} catch (IOException i) {
+			
+		}
 		
+		List<MediaFeedData> mediaList = null;
 		for (String term : terms) {
 			if (!term.contains("-") && !term.contains(" ")) {
-				List<MediaFeedData> mediaList = getPostsByTerm(instagram, term, min, max);
+				mediaList = getPostsByTerm(instagram, term, min, max);
+			}
+			System.out.println("Finished term:" + term + " with updated size " + mediaList.size());
+		
+			System.out.println("Updating DB...");
+			
+			PreparedStatement instagram_ps = null;
+			PreparedStatement comments_ps = null;
+			PreparedStatement users_ps = null;
+			
+			try {
+				instagram_ps = conn.prepareStatement(instagram_sql);
+				comments_ps = conn.prepareStatement(comments_sql);
+				users_ps = conn.prepareStatement(users_sql);
+				
+				for (MediaFeedData mfd : mediaList) {
+					
+					String id = mfd.getId();
+					
+					// process post, comment, and user data separately
+					instagram_ps = parseInstagramPostData(instagram_ps, mfd);
+					comments_ps = parseInstagramCommentData(comments_ps, mfd);
+					users_ps = parseInstagramUsersData(users_ps, mfd);
+					
+				}
+				
+				// insert into database
+				instagram_ps.executeBatch();
+				users_ps.executeBatch();
+				comments_ps.executeBatch();
+				
+				System.out.println("Finished DB update");
+				
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 
@@ -196,18 +256,20 @@ public class TcorsInstagramUtils {
 			e.printStackTrace();
 		}
 		
-		System.out.println("Step 1 size:" + mediaFeed.getData().size());
-		for (MediaFeedData mfd : mediaList) {
-			Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
-			System.out.println("id:" + mfd.getId() + " time:" + ts.toString());
-		}
+		System.out.println("Word:" + term + " // Step 1 size:" + mediaList.size());
+		System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
+		
+//		for (MediaFeedData mfd : mediaList) {
+//			Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
+//			System.out.println("id:" + mfd.getId() + " time:" + ts.toString());
+//		}
 
 		if (mediaFeed.getPagination().hasNextPage() == false) {
 			System.out.println("SHOULD STOP NOW");
 		} else {
 		
 			long nextMax = Long.parseLong(mediaFeed.getPagination().getNextMaxId());
-			System.out.println("nextMax: " + nextMax);
+//			System.out.println("nextMax: " + nextMax);
 			MediaFeed recentMediaNextPage = null;
 			try {
 				recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
@@ -217,24 +279,121 @@ public class TcorsInstagramUtils {
 		
 			// loop
 
-			while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
-				for (MediaFeedData mfd : recentMediaNextPage.getData()) {
-					Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
-					System.out.println("id:" + mfd.getId() + " time:" + ts.toString());
-				}
-		
-				nextMax = Long.parseLong(recentMediaNextPage.getPagination().getNextMaxId());
-				System.out.println("next max:" + nextMax);
-				
-				try {
-					recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
-				} catch (InstagramException e) {
-					e.printStackTrace();
+			if (recentMediaNextPage != null) {
+				while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
+					
+					mediaList.addAll(recentMediaNextPage.getData());
+//					System.out.println("mediaList size:" + mediaList.size());
+					System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus());
+					
+//					for (MediaFeedData mfd : recentMediaNextPage.getData()) {
+//						Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
+//						System.out.println("id:" + mfd.getId() + " time:" + ts.toString());
+//					}
+			
+					nextMax = Long.parseLong(recentMediaNextPage.getPagination().getNextMaxId());
+//					System.out.println("next max:" + nextMax);
+					
+					try {
+						recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
+					} catch (InstagramException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
 		
 		return mediaList;
+	}
+	
+private static PreparedStatement parseInstagramPostData(PreparedStatement instagram_ps, MediaFeedData mfd) throws SQLException {
+		
+		String caption = "";
+		try {
+			caption = mfd.getCaption().getText();
+		} catch (NullPointerException n) {
+			
+		}
+		
+		Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
+		String id = mfd.getId();
+		String url = mfd.getImages().getStandardResolution().getImageUrl();
+		int likes = mfd.getLikes().getCount();
+		Location location = mfd.getLocation();
+		String location_name = "";
+		double lat = 0;
+		double lon = 0;
+		if (location != null) {
+			location_name = location.getName();
+			lat = location.getLatitude();
+			lon = location.getLongitude();
+		}
+		
+		User user = mfd.getUser();
+		String username = user.getUserName();
+
+		Comments comments = mfd.getComments();
+		int comments_count = comments.getCount();
+		
+		instagram_ps.setString(1, id);
+		instagram_ps.setTimestamp(2, ts);
+		instagram_ps.setString(3, username);
+		instagram_ps.setString(4, caption);
+		instagram_ps.setInt(5, likes);
+		instagram_ps.setInt(6, comments_count);
+		instagram_ps.setString(7, url);
+		instagram_ps.setString(8, location_name);
+		instagram_ps.setInt(9, 0);
+		instagram_ps.setDouble(10, lat);
+		instagram_ps.setDouble(11, lon);
+		
+		instagram_ps.addBatch();
+		
+		return instagram_ps;
+	}
+	
+	private static PreparedStatement parseInstagramCommentData(PreparedStatement comments_ps, MediaFeedData mfd) throws SQLException {
+
+		String id = mfd.getId();
+		
+		Comments comments = mfd.getComments();
+		
+		// process comments
+		List<CommentData> cd = comments.getComments();
+		for (CommentData comment_data : cd) {
+			String comment_id = comment_data.getId();
+			String comment_username = comment_data.getCommentFrom().getUsername();
+			String comment_text = comment_data.getText();
+			Timestamp comment_created_time = new Timestamp(Long.parseLong(comment_data.getCreatedTime())*1000);
+			
+			comments_ps.setString(1, comment_id);
+			comments_ps.setString(2, id);
+			comments_ps.setString(3, comment_username);
+			comments_ps.setString(4, comment_text);
+			comments_ps.setTimestamp(5, comment_created_time);
+			
+			comments_ps.addBatch();
+		}
+		
+		return comments_ps;
+	}
+	
+	private static PreparedStatement parseInstagramUsersData(PreparedStatement users_ps, MediaFeedData mfd) throws SQLException {
+		
+		User user = mfd.getUser();
+		String username = user.getUserName();
+		String user_bio = user.getBio();
+		String user_fullname = user.getFullName();
+		String user_id = user.getId();
+
+		users_ps.setString(1, user_id);
+		users_ps.setString(2, user_fullname);
+		users_ps.setString(3, user_bio);
+		users_ps.setString(4, username);
+		
+		users_ps.addBatch();
+		
+		return users_ps;
 	}
 	
 	// get images
