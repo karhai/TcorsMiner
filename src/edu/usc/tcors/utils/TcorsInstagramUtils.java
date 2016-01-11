@@ -205,41 +205,42 @@ public class TcorsInstagramUtils {
 		for (String term : terms) {
 			if (!term.contains("-") && !term.contains(" ")) {
 				mediaList = getPostsByTerm(instagram, term, min, max);
-			}
-			System.out.println("Finished term:" + term + " with updated size " + mediaList.size());
-		
-			System.out.println("Updating DB...");
+
+				System.out.println("Finished term:" + term + " with updated size " + mediaList.size());
 			
-			PreparedStatement instagram_ps = null;
-			PreparedStatement comments_ps = null;
-			PreparedStatement users_ps = null;
-			
-			try {
-				instagram_ps = conn.prepareStatement(instagram_sql);
-				comments_ps = conn.prepareStatement(comments_sql);
-				users_ps = conn.prepareStatement(users_sql);
+				System.out.println("Updating DB...");
 				
-				for (MediaFeedData mfd : mediaList) {
+				PreparedStatement instagram_ps = null;
+				PreparedStatement comments_ps = null;
+				PreparedStatement users_ps = null;
+				
+				try {
+					instagram_ps = conn.prepareStatement(instagram_sql);
+					comments_ps = conn.prepareStatement(comments_sql);
+					users_ps = conn.prepareStatement(users_sql);
 					
-					String id = mfd.getId();
+					for (MediaFeedData mfd : mediaList) {
+						
+						String id = mfd.getId();
+						
+						// process post, comment, and user data separately
+						instagram_ps = parseInstagramPostData(instagram_ps, mfd);
+						comments_ps = parseInstagramCommentData(comments_ps, mfd);
+						users_ps = parseInstagramUsersData(users_ps, mfd);
+						
+					}
 					
-					// process post, comment, and user data separately
-					instagram_ps = parseInstagramPostData(instagram_ps, mfd);
-					comments_ps = parseInstagramCommentData(comments_ps, mfd);
-					users_ps = parseInstagramUsersData(users_ps, mfd);
+					// insert into database
+					instagram_ps.executeBatch();
+					users_ps.executeBatch();
+					comments_ps.executeBatch();
 					
+					System.out.println("Finished DB update");
+					
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-				
-				// insert into database
-				instagram_ps.executeBatch();
-				users_ps.executeBatch();
-				comments_ps.executeBatch();
-				
-				System.out.println("Finished DB update");
-				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 
