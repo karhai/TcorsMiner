@@ -44,7 +44,7 @@ import edu.usc.tcors.TcorsTwitterStream;
 
 public class TcorsInstagramUtils {
 
-	final static String get_file_URLs = "SELECT id, url " +
+	final static String get_image_data = "SELECT id, url , createdTime " +
 			"FROM instagram " + 
 			"WHERE storePicture = 0 " + 
 			"LIMIT 1000";
@@ -134,7 +134,7 @@ public class TcorsInstagramUtils {
 			 */
 			
 			if (args[0].equals("historical")) {
-				getHistorical("1119358947686849757","1119696857996892744");
+				getHistorical("1157918924669391194","1158092444039772644");
 			}
 		}
 			
@@ -406,8 +406,8 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 	public static void getImages(Connection conn) {
 		String destinationFile = "";
 		String parentDir = "";
-		HashMap<String,String> id_urls = new HashMap<String,String>();
-		id_urls = getImageURLs(conn);
+		HashMap<String,String> image_data = new HashMap<String,String>();
+		image_data = getImageData(conn);
 		
 //		for(Map.Entry<String,String> entry : id_urls.entrySet()) {
 //			System.out.println("id:" + entry.getKey() + " url:" + entry.getValue());
@@ -417,14 +417,19 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 		int counter = 0;
 		List<String> bad_urls = new ArrayList<String>();
 		
-		for(Map.Entry<String,String> entry : id_urls.entrySet()) {
+		for(Map.Entry<String,String> entry : image_data.entrySet()) {
 			String key = entry.getKey();
-			String fileURL = entry.getValue();
-			if (!fileURL.isEmpty()) {
-				String fileName = parseFileName(fileURL);
-				String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+			String data = entry.getValue();
+			if (!data.isEmpty()) {
+				String[] image_url_date = data.split("\t");
+				String image_url = image_url_date[0];
+				String image_date = image_url_date[1];
+				String fileName = parseFileName(image_url);
+				// String store_date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+				String parse_date[] = image_date.split(" ");
+				String store_date = parse_date[0];
 				
-				parentDir = destination_directory + today + "\\";
+				parentDir = destination_directory + store_date + "\\";
 				destinationFile = parentDir + fileName;
 				
 				// parentDir = destination_directory + today + "/";
@@ -434,7 +439,7 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 				checkDirectory(parentDir);
 				
 				try {
-					saveImage(fileURL, destinationFile);
+					saveImage(image_url, destinationFile);
 				} catch (FileNotFoundException f) {
 					bad_urls.add(key);
 					System.out.println("Could not find file:" + fileName);
@@ -455,11 +460,11 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 		}
 		
 		for(String id : bad_urls) {
-			id_urls.remove(id);
+			image_data.remove(id);
 		}
 		
 		updateBadURLs(conn, bad_urls);
-		updateStorePicture(conn, id_urls);
+		updateStorePicture(conn, image_data);
 	}
 	
 	private static void checkDirectory(String destinationDir) {
@@ -471,18 +476,20 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 		}
 	}
 	
-	private static HashMap<String,String> getImageURLs(Connection conn) {
+	private static HashMap<String,String> getImageData(Connection conn) {
 		
-		System.out.println("Getting image URLs...");
-		HashMap<String,String> id_urls = new HashMap<String,String>();
+		System.out.println("Getting image data...");
+		HashMap<String,String> image_data = new HashMap<String,String>();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			ps = conn.prepareStatement(get_file_URLs);
+			ps = conn.prepareStatement(get_image_data);
 			rs = ps.executeQuery();
 			
+			String data = "";
 			while(rs.next()) {
-				id_urls.put(rs.getString("id"), rs.getString("url"));
+				data = rs.getString("url") + "\t" + rs.getString("createdTime");
+				image_data.put(rs.getString("id"), data);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -490,8 +497,8 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 			if (ps != null) try { ps.close(); } catch (SQLException s) { };
 		}
 		
-		System.out.println("Found:" + id_urls.size());
-		return id_urls;
+		System.out.println("Found:" + image_data.size());
+		return image_data;
 	}
 	
 	private static void updateStorePicture(Connection conn, HashMap<String,String> id_urls) {
