@@ -57,7 +57,8 @@ public class TcorsInstagramUtils {
 			"SET storePicture = -1 " +
 			"WHERE id = ?";
 	
-	// TODO we do not update user meta-data after it is populated
+	// TODO: we do not update user meta-data after it is populated
+	
 	final static String get_user_IDs = "SELECT id " +
 			"FROM instagram_users " +
 			"WHERE follows IS NULL " +
@@ -73,14 +74,10 @@ public class TcorsInstagramUtils {
 			"SET bio = ?, follows = ?, followedBy = ? " +
 			"WHERE id = ?";
 	
-	// TODO get a generic version
-	// final static String destination_directory = "/Users/karhai/tmp/instagram_pix/";
-	// final static String destination_directory = "g:\\tcorstwitter\\Documents\\instagram_images\\";
+	// TODO: make this configurable
 	final static String destination_directory = "h:\\tcorstwitter\\Documents\\instagram_images\\";
 	
 	public static void main(String[] args) throws Exception {
-		
-		// hacked up code for quick fixes
 		
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		Connection conn = tmu.getDBConn("configuration.properties");
@@ -88,7 +85,7 @@ public class TcorsInstagramUtils {
 		if (args.length > 0) {
 			
 			/*
-			 * user bios
+			 * user bios: recover user bios for new users (not included during initial data mine)
 			 */
 			
 			if (args[0].equals("users")) {
@@ -98,7 +95,7 @@ public class TcorsInstagramUtils {
 			}
 			
 			/*
-			 * images
+			 * images: download images for each post
 			 */
 			
 			if (args[0].equals("images")) {
@@ -110,7 +107,7 @@ public class TcorsInstagramUtils {
 			}
 			
 			/*
-			 * user bios
+			 * user bios: massive recovery of user bios
 			 */
 			
 			if (args[0].equals("recovery")) {
@@ -130,7 +127,7 @@ public class TcorsInstagramUtils {
 			}
 			
 			/*
-			 * recover missing historical data
+			 * historical: recover missing historical data based on min/max ID's
 			 */
 			
 			if (args[0].equals("historical")) {
@@ -138,11 +135,13 @@ public class TcorsInstagramUtils {
 			}
 		}
 			
-		System.out.println("Pau!");
+		System.out.println("Completed!");
 		
 	}
 
-	// general properties
+	/*
+	 * Pull in general properties
+	 */
 	
 	private static Properties getProps() {
 		Properties prop = new Properties();
@@ -155,14 +154,15 @@ public class TcorsInstagramUtils {
 		return prop;
 	}
 	
+	/*
+	 * Retrieve tokens for Instagram account
+	 */
+	
 	public static Token getSecretToken() {
 		Properties iProp = getProps();
 		Token secretToken = new Token(iProp.getProperty("oauth.accessToken"),null);
 		return secretToken;
 	}
-	
-	// get historical posts
-	// TODO: will be very dirty code
 	
 	final static String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture, latitude, longitude) " +
 			"VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -176,6 +176,7 @@ public class TcorsInstagramUtils {
 	 * 
 	 * Proper fix is probably to remove the 10 hardcoded pagination retrievals for the exact number
 	 */
+	
 	final static String users_sql = "INSERT IGNORE INTO instagram_users (id, fullname, bio, username) " +
 			"VALUE (?, ?, ?, ?)";
 	
