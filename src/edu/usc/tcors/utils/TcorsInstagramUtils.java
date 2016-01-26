@@ -74,7 +74,7 @@ public class TcorsInstagramUtils {
 			"SET bio = ?, follows = ?, followedBy = ? " +
 			"WHERE id = ?";
 	
-	// TODO: make this configurable
+	// TODO: make this directory configurable
 	final static String destination_directory = "h:\\tcorstwitter\\Documents\\instagram_images\\";
 	
 	public static void main(String[] args) throws Exception {
@@ -171,10 +171,8 @@ public class TcorsInstagramUtils {
 			"VALUE (?, ?, ?, ?, ?)";
 	
 	/*
-	 * TODO consider using REPLACE, which would force repopulation of user meta-data
-	 * but at the cost of spending quota
-	 * 
-	 * Proper fix is probably to remove the 10 hardcoded pagination retrievals for the exact number
+	 * TODO: consider using REPLACE, which would force repopulation of user meta-data
+	 * but at the cost of spending quota, will need to be revisited based on Instagram changes
 	 */
 	
 	final static String users_sql = "INSERT IGNORE INTO instagram_users (id, fullname, bio, username) " +
@@ -260,11 +258,6 @@ public class TcorsInstagramUtils {
 		
 		System.out.println("Word:" + term + " // Step 1 size:" + mediaList.size());
 		System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
-		
-//		for (MediaFeedData mfd : mediaList) {
-//			Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
-//			System.out.println("id:" + mfd.getId() + " time:" + ts.toString());
-//		}
 
 		if (mediaFeed.getPagination().hasNextPage() == false) {
 			System.out.println("SHOULD STOP NOW");
@@ -287,11 +280,6 @@ public class TcorsInstagramUtils {
 					mediaList.addAll(recentMediaNextPage.getData());
 //					System.out.println("mediaList size:" + mediaList.size());
 					System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus());
-					
-//					for (MediaFeedData mfd : recentMediaNextPage.getData()) {
-//						Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
-//						System.out.println("id:" + mfd.getId() + " time:" + ts.toString());
-//					}
 			
 					nextMax = Long.parseLong(recentMediaNextPage.getPagination().getNextMaxId());
 //					System.out.println("next max:" + nextMax);
@@ -410,10 +398,6 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 		HashMap<String,String> image_data = new HashMap<String,String>();
 		image_data = getImageData(conn);
 		
-//		for(Map.Entry<String,String> entry : id_urls.entrySet()) {
-//			System.out.println("id:" + entry.getKey() + " url:" + entry.getValue());
-//		}
-		
 		System.out.println("Getting images...");
 		int counter = 0;
 		List<String> bad_urls = new ArrayList<String>();
@@ -426,7 +410,6 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 				String image_url = image_url_date[0];
 				String image_date = image_url_date[1];
 				String fileName = parseFileName(image_url);
-				// String store_date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 				String parse_date[] = image_date.split(" ");
 				String store_date = parse_date[0];
 				
@@ -563,7 +546,9 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 		os.close();
 	}
 	
-	// update profile bios
+	/*
+	 * update profile bios
+	 */
 	
 	public static void updateUsers(Connection conn, Instagram inst) {
 		List<String> user_ids = new ArrayList<String>();

@@ -12,6 +12,12 @@ import java.util.Properties;
 
 import edu.usc.tcors.TcorsTwitterStream;
 
+/*
+ * Simple functions for generic tools used by either Twitter or Instagram
+ * 
+ * Specifically, grabbing database information
+ */
+
 public class TcorsMinerUtils {
 
 	static String fileName = "keywords.txt";
