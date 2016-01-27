@@ -1,8 +1,13 @@
 package edu.usc.tcors;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -11,6 +16,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import edu.usc.tcors.utils.TcorsMinerUtils;
 import twitter4j.FilterQuery;
 import twitter4j.StallWarning;
 import twitter4j.Status;
@@ -60,8 +66,15 @@ public class TcorsTwitterStream {
 
 			@Override
 			public void onException(Exception arg0) {
-				// TODO Auto-generated method stub
-				
+				// dump to file
+				BufferedWriter bw = null;
+				try {
+					bw = new BufferedWriter(new FileWriter("exception.txt",true));
+					PrintWriter pw = new PrintWriter(bw, true);
+					arg0.printStackTrace(pw);
+				} catch (Exception ie) {
+					ie.printStackTrace();
+				}
 			}
 
 			@Override
@@ -84,8 +97,15 @@ public class TcorsTwitterStream {
 
 			@Override
 			public void onTrackLimitationNotice(int arg0) {
-				// TODO Auto-generated method stub
-				
+				// dump to file
+				BufferedWriter bw = null;
+				try {
+					bw = new BufferedWriter(new FileWriter("limits.txt",true));
+					bw.write("Limit:" + arg0);
+					bw.newLine();
+				} catch (IOException io) {
+					io.printStackTrace();
+				}
 			}
 		};
 		
@@ -195,25 +215,10 @@ public class TcorsTwitterStream {
 	 * TODO: refactor
 	 */
 	
-	private Properties getDBConf() {
-		Properties prop = new Properties();
-		try {
-			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream("configuration.properties");
-			prop.load(in);
-		} catch (IOException e) {
-			// log.error(e.toString());
-		}
-		return prop;
-	}
-	
-	/*
-	 * TODO: refactor
-	 */
-	
 	private Connection getDBConn() throws SQLException {
 		System.out.println("Creating a DB connection...");
 		Connection conn = null;
-		Properties prop = getDBConf();
+		Properties prop = TcorsMinerUtils.getProps("configuration.properties");
 
 		try {
 			Class.forName("com.mysql.jdbc.Driver");

@@ -121,3 +121,11 @@ fresh empire
 freshempire
 camel crush bold
 camelcrushbold
+# survey in study 3 -- added 1/26/2016
+menthol
+clove
+hookah
+cigarillo
+# jon request, additional survey terms -- added 1/27/2016
+blunt
+vaporcade

@@ -42,10 +42,11 @@ public class TcorsMinerUtils {
 	 * Configuration utilities
 	 */
 	
-	private Properties getDBConf(String filename) {
+	public static Properties getProps(String filename) {
 		Properties prop = new Properties();
 		try {
-			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream(filename);
+			ClassLoader loader = Thread.currentThread().getContextClassLoader();
+			InputStream in = loader.getResourceAsStream(filename);
 			prop.load(in);
 		} catch (IOException e) {
 			// log.error(e.toString());
@@ -56,7 +57,7 @@ public class TcorsMinerUtils {
 	public Connection getDBConn(String filename) throws SQLException {
 		System.out.println("Creating a DB connection...");
 		Connection conn = null;
-		Properties prop = getDBConf(filename);
+		Properties prop = getProps(filename);
 
 		try {
 			Class.forName("com.mysql.jdbc.Driver");

@@ -57,8 +57,6 @@ public class TcorsInstagramUtils {
 			"SET storePicture = -1 " +
 			"WHERE id = ?";
 	
-	// TODO: we do not update user meta-data after it is populated
-	
 	final static String get_user_IDs = "SELECT id " +
 			"FROM instagram_users " +
 			"WHERE follows IS NULL " +
@@ -131,27 +129,12 @@ public class TcorsInstagramUtils {
 			 */
 			
 			if (args[0].equals("historical")) {
-				getHistorical("1157918924669391194","1158092444039772644");
+				getHistorical("1171523268256194717","1171893930623798416");
 			}
 		}
 			
 		System.out.println("Completed!");
 		
-	}
-
-	/*
-	 * Pull in general properties
-	 */
-	
-	private static Properties getProps() {
-		Properties prop = new Properties();
-		try {
-			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream("jInstagram.properties");
-			prop.load(in);
-		} catch (IOException e) {
-			// log.error(e.toString());
-		}
-		return prop;
 	}
 	
 	/*
@@ -159,7 +142,7 @@ public class TcorsInstagramUtils {
 	 */
 	
 	public static Token getSecretToken() {
-		Properties iProp = getProps();
+		Properties iProp = TcorsMinerUtils.getProps("jInstagram.properties");
 		Token secretToken = new Token(iProp.getProperty("oauth.accessToken"),null);
 		return secretToken;
 	}
@@ -178,6 +161,10 @@ public class TcorsInstagramUtils {
 	final static String users_sql = "INSERT IGNORE INTO instagram_users (id, fullname, bio, username) " +
 			"VALUE (?, ?, ?, ?)";
 	
+	/*
+	 * TODO could attempt to refactor this, there is overlap with the primary scraper
+	 */
+	
 	public static void getHistorical(String min, String max) {
 		System.out.println("Getting historical data...");
 
@@ -195,7 +182,7 @@ public class TcorsInstagramUtils {
 //		String[] terms = {"ecigarette","ecigarettes"};
 		String[] terms = null;
 		try {
-			terms = tmu.loadSearchTerms();
+			terms = TcorsMinerUtils.loadSearchTerms();
 		} catch (IOException i) {
 			
 		}
@@ -245,6 +232,8 @@ public class TcorsInstagramUtils {
 
 	}
 	
+	// TODO since the main scraper uses this function, will need an option to do limited run for recovery situations
+	
 	public static List<MediaFeedData> getPostsByTerm(Instagram instagram, String term, String min, String max) {
 		TagMediaFeed mediaFeed = null;
 		List<MediaFeedData> mediaList = null;
@@ -260,7 +249,7 @@ public class TcorsInstagramUtils {
 		System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
 
 		if (mediaFeed.getPagination().hasNextPage() == false) {
-			System.out.println("SHOULD STOP NOW");
+			System.out.println("Done.");
 		} else {
 		
 			long nextMax = Long.parseLong(mediaFeed.getPagination().getNextMaxId());
@@ -296,7 +285,7 @@ public class TcorsInstagramUtils {
 		return mediaList;
 	}
 	
-private static PreparedStatement parseInstagramPostData(PreparedStatement instagram_ps, MediaFeedData mfd) throws SQLException {
+	public static PreparedStatement parseInstagramPostData(PreparedStatement instagram_ps, MediaFeedData mfd) throws SQLException {
 		
 		String caption = "";
 		try {
@@ -342,7 +331,7 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 		return instagram_ps;
 	}
 	
-	private static PreparedStatement parseInstagramCommentData(PreparedStatement comments_ps, MediaFeedData mfd) throws SQLException {
+	public static PreparedStatement parseInstagramCommentData(PreparedStatement comments_ps, MediaFeedData mfd) throws SQLException {
 
 		String id = mfd.getId();
 		
@@ -368,7 +357,7 @@ private static PreparedStatement parseInstagramPostData(PreparedStatement instag
 		return comments_ps;
 	}
 	
-	private static PreparedStatement parseInstagramUsersData(PreparedStatement users_ps, MediaFeedData mfd) throws SQLException {
+	public static PreparedStatement parseInstagramUsersData(PreparedStatement users_ps, MediaFeedData mfd) throws SQLException {
 		
 		User user = mfd.getUser();
 		String username = user.getUserName();

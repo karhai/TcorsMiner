@@ -34,7 +34,6 @@ public class TcorsInstagramScraper {
 			"FROM instagram_terms " +
 			"WHERE search_term = ?";
 	
-	// TODO this forces redownloads of existing images, with the benefit of updated post meta-data. Better option?
 	final String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture, latitude, longitude) " +
 			"VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	
@@ -44,8 +43,6 @@ public class TcorsInstagramScraper {
 	/*
 	 * TODO consider using REPLACE, which would force repopulation of user meta-data
 	 * but at the cost of spending quota
-	 * 
-	 * Proper fix is probably to remove the 10 hardcoded pagination retrievals for the exact number
 	 */
 	final String users_sql = "INSERT IGNORE INTO instagram_users (id, fullname, bio, username) " +
 			"VALUE (?, ?, ?, ?)";
@@ -153,7 +150,7 @@ public class TcorsInstagramScraper {
 				}
 				
 				// get data from Instagram
-				List<MediaFeedData> mediaList = getPostsByTerm(instagram, term, min_id);
+				List<MediaFeedData> mediaList = TcorsInstagramUtils.getPostsByTerm(instagram, term, min_id, "");
 				
 				System.out.println("Updating DB...");
 				String new_min_id = "";
@@ -178,9 +175,9 @@ public class TcorsInstagramScraper {
 						String id = mfd.getId();
 						
 						// process post, comment, and user data separately
-						instagram_ps = parseInstagramPostData(instagram_ps, mfd);
-						comments_ps = parseInstagramCommentData(comments_ps, mfd);
-						users_ps = parseInstagramUsersData(users_ps, mfd);
+						instagram_ps = TcorsInstagramUtils.parseInstagramPostData(instagram_ps, mfd);
+						comments_ps = TcorsInstagramUtils.parseInstagramCommentData(comments_ps, mfd);
+						users_ps = TcorsInstagramUtils.parseInstagramUsersData(users_ps, mfd);
 						
 						/*
 						 * get the latest ID for future runs
@@ -239,153 +236,5 @@ public class TcorsInstagramScraper {
 			st.close();
 		}
 		return min_id;
-	}
-	
-	private PreparedStatement parseInstagramPostData(PreparedStatement instagram_ps, MediaFeedData mfd) throws SQLException {
-		
-		String caption = "";
-		try {
-			caption = mfd.getCaption().getText();
-		} catch (NullPointerException n) {
-			
-		}
-		
-		Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
-		String id = mfd.getId();
-		String url = mfd.getImages().getStandardResolution().getImageUrl();
-		int likes = mfd.getLikes().getCount();
-		Location location = mfd.getLocation();
-		String location_name = "";
-		double lat = 0;
-		double lon = 0;
-		if (location != null) {
-			location_name = location.getName();
-			lat = location.getLatitude();
-			lon = location.getLongitude();
-		}
-		
-		User user = mfd.getUser();
-		String username = user.getUserName();
-
-		Comments comments = mfd.getComments();
-		int comments_count = comments.getCount();
-		
-		instagram_ps.setString(1, id);
-		instagram_ps.setTimestamp(2, ts);
-		instagram_ps.setString(3, username);
-		instagram_ps.setString(4, caption);
-		instagram_ps.setInt(5, likes);
-		instagram_ps.setInt(6, comments_count);
-		instagram_ps.setString(7, url);
-		instagram_ps.setString(8, location_name);
-		instagram_ps.setInt(9, 0);
-		instagram_ps.setDouble(10, lat);
-		instagram_ps.setDouble(11, lon);
-		
-		instagram_ps.addBatch();
-		
-		return instagram_ps;
-	}
-	
-	private PreparedStatement parseInstagramCommentData(PreparedStatement comments_ps, MediaFeedData mfd) throws SQLException {
-
-		String id = mfd.getId();
-		
-		Comments comments = mfd.getComments();
-		
-		// process comments
-		List<CommentData> cd = comments.getComments();
-		for (CommentData comment_data : cd) {
-			String comment_id = comment_data.getId();
-			String comment_username = comment_data.getCommentFrom().getUsername();
-			String comment_text = comment_data.getText();
-			Timestamp comment_created_time = new Timestamp(Long.parseLong(comment_data.getCreatedTime())*1000);
-			
-			comments_ps.setString(1, comment_id);
-			comments_ps.setString(2, id);
-			comments_ps.setString(3, comment_username);
-			comments_ps.setString(4, comment_text);
-			comments_ps.setTimestamp(5, comment_created_time);
-			
-			comments_ps.addBatch();
-		}
-		
-		return comments_ps;
-	}
-	
-	private PreparedStatement parseInstagramUsersData(PreparedStatement users_ps, MediaFeedData mfd) throws SQLException {
-		
-		User user = mfd.getUser();
-		String username = user.getUserName();
-		String user_bio = user.getBio();
-		String user_fullname = user.getFullName();
-		String user_id = user.getId();
-
-		users_ps.setString(1, user_id);
-		users_ps.setString(2, user_fullname);
-		users_ps.setString(3, user_bio);
-		users_ps.setString(4, username);
-		
-		users_ps.addBatch();
-		
-		return users_ps;
-	}
-	
-	/*
-	 * use Instagram API to retrieve posts based on a single term
-	 */
-	
-	private List<MediaFeedData> getPostsByTerm(Instagram instagram, String term, String min_id) {
-		
-		TagMediaFeed mediaFeed = null;
-		List<MediaFeedData> mediaList = null;
-		int limit = 0;
-		
-		try {
-			
-			mediaFeed = instagram.getRecentMediaTags(term, min_id, "", returnSize);
-			mediaList = mediaFeed.getData();
-			System.out.println("Step 1 size:" + mediaFeed.getData().size());
-			
-			MediaFeed recentMediaNextPage = null;
-			// if (mediaFeed.getData().size() >= 33) { // or returnSize?
-			if (mediaFeed.getPagination().hasNextPage()) {
-				recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
-			}
-			
-			// TODO the above/below if loops might need to be cleaned up
-			int counter = 1;
-			
-			limit = mediaFeed.getRemainingLimitStatus();
-			System.out.println("mediaFeed REMAIN:" + limit);
-			
-			if (recentMediaNextPage != null) {
-				while (recentMediaNextPage.getPagination() != null && counter < 10) {
-					
-					mediaList.addAll(recentMediaNextPage.getData());
-
-					if (recentMediaNextPage.getPagination() != null) {
-						try {
-							recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
-						} catch (IllegalStateException i) {
-							i.printStackTrace();
-						}
-					}
-					
-					// test
-					// System.out.println("test ID:" + recentMediaNextPage.getData().get(0).getId());
-					
-					counter++;
-					System.out.println("Counter (pages):" + counter);
-				}
-			}
-			System.out.println("mediaList size (x33):" + mediaList.size());
-		} catch (InstagramException e) {
-			e.printStackTrace();
-		} catch (IllegalStateException i) {
-			i.printStackTrace();
-		}
-		
-		return mediaList;
 	}
 }
