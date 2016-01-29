@@ -74,6 +74,7 @@ public class TcorsInstagramUtils {
 	
 	// TODO: make this directory configurable
 	final static String destination_directory = "h:\\tcorstwitter\\Documents\\instagram_images\\";
+	final static String destination_directory2 = "g:\\tcorstwitter\\Documents\\instagram_images\\";
 	
 	public static void main(String[] args) throws Exception {
 		
@@ -243,40 +244,44 @@ public class TcorsInstagramUtils {
 			mediaList = mediaFeed.getData();
 		} catch (InstagramException e) {
 			e.printStackTrace();
+		} catch (NullPointerException n) {
+			n.printStackTrace();
 		}
 		
-		System.out.println("Word:" + term + " // Step 1 size:" + mediaList.size());
-		System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
-
-		if (mediaFeed.getPagination().hasNextPage() == false) {
-			System.out.println("Done.");
-		} else {
-		
-			long nextMax = Long.parseLong(mediaFeed.getPagination().getNextMaxId());
-//			System.out.println("nextMax: " + nextMax);
-			MediaFeed recentMediaNextPage = null;
-			try {
-				recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
-			} catch (InstagramException e) {
-				e.printStackTrace();
-			}
-		
-			// loop
-
-			if (recentMediaNextPage != null) {
-				while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
-					
-					mediaList.addAll(recentMediaNextPage.getData());
-//					System.out.println("mediaList size:" + mediaList.size());
-					System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus());
+		if (mediaList != null) {
+			System.out.println("Word:" + term + " // Step 1 size:" + mediaList.size());
+			System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
+	
+			if (mediaFeed.getPagination().hasNextPage() == false) {
+				System.out.println("Done.");
+			} else {
 			
-					nextMax = Long.parseLong(recentMediaNextPage.getPagination().getNextMaxId());
-//					System.out.println("next max:" + nextMax);
-					
-					try {
-						recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
-					} catch (InstagramException e) {
-						e.printStackTrace();
+				long nextMax = Long.parseLong(mediaFeed.getPagination().getNextMaxId());
+	//			System.out.println("nextMax: " + nextMax);
+				MediaFeed recentMediaNextPage = null;
+				try {
+					recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
+				} catch (InstagramException e) {
+					e.printStackTrace();
+				}
+			
+				// loop
+	
+				if (recentMediaNextPage != null) {
+					while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
+						
+						mediaList.addAll(recentMediaNextPage.getData());
+	//					System.out.println("mediaList size:" + mediaList.size());
+						System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus());
+				
+						nextMax = Long.parseLong(recentMediaNextPage.getPagination().getNextMaxId());
+	//					System.out.println("next max:" + nextMax);
+						
+						try {
+							recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
+						} catch (InstagramException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
@@ -519,10 +524,10 @@ public class TcorsInstagramUtils {
 		URLConnection urlConn = url.openConnection();
 		urlConn.setConnectTimeout(5000);
 		urlConn.setReadTimeout(10000);
-		// InputStream is = url.openStream();
 		InputStream is = urlConn.getInputStream();
-		// OutputStream os = new FileOutputStream(destinationFile);
 		FileOutputStream os = new FileOutputStream(destinationFile);
+		
+		// TODO possibly add second save directory for backup
 		
 		byte[] b = new byte[2048];
 		int length;
