@@ -28,6 +28,7 @@ import org.jinstagram.entity.comments.CommentData;
 import org.jinstagram.entity.common.Comments;
 import org.jinstagram.entity.common.Location;
 import org.jinstagram.entity.common.User;
+import org.jinstagram.entity.media.MediaInfoFeed;
 import org.jinstagram.entity.tags.TagMediaFeed;
 import org.jinstagram.entity.users.basicinfo.UserInfo;
 import org.jinstagram.entity.users.basicinfo.UserInfoData;
@@ -70,6 +71,15 @@ public class TcorsInstagramUtils {
 	
 	final static String update_user_info = "UPDATE instagram_users " +
 			"SET bio = ?, follows = ?, followedBy = ? " +
+			"WHERE id = ?";
+	
+	final static String get_media_IDs_to_update = "SELECT id " +
+			"FROM instagram_study_sample " + 
+			"WHERE current = 0 " +
+			"LIMIT 1000";
+	
+	final static String update_media_info = "UPDATE instagram_study_sample " + 
+			"SET likes = ?, comments = ?, current = 1 "+
 			"WHERE id = ?";
 	
 	// TODO: make this directory configurable
@@ -131,6 +141,16 @@ public class TcorsInstagramUtils {
 			
 			if (args[0].equals("historical")) {
 				getHistorical("1171523268256194717","1171893930623798416");
+			}
+			
+			/*
+			 * update: update existing Instagram posts (only for test)
+			 */
+			
+			if (args[0].equals("media")) {
+				Token secretToken = getSecretToken();
+				Instagram instagram = new Instagram(secretToken);
+				getMediaUpdates(conn, instagram);
 			}
 		}
 			
@@ -302,6 +322,15 @@ public class TcorsInstagramUtils {
 		Timestamp ts = new Timestamp(Long.parseLong(mfd.getCreatedTime())*1000);
 		String id = mfd.getId();
 		String url = mfd.getImages().getStandardResolution().getImageUrl();
+		
+		// update to remove trailing ig_cache_key in the url
+		String final_url = "";
+		if (url.indexOf("?") != -1) {
+			final_url = url.substring(0, url.indexOf("?"));
+		} else {
+			final_url = url;
+		}
+		
 		int likes = mfd.getLikes().getCount();
 		Location location = mfd.getLocation();
 		String location_name = "";
@@ -325,7 +354,7 @@ public class TcorsInstagramUtils {
 		instagram_ps.setString(4, caption);
 		instagram_ps.setInt(5, likes);
 		instagram_ps.setInt(6, comments_count);
-		instagram_ps.setString(7, url);
+		instagram_ps.setString(7, final_url);
 		instagram_ps.setString(8, location_name);
 		instagram_ps.setInt(9, 0);
 		instagram_ps.setDouble(10, lat);
@@ -648,5 +677,90 @@ public class TcorsInstagramUtils {
 		} finally {
 			if (ps != null) try { ps.close(); } catch (SQLException s) { }
 		}	
+	}	
+	
+	/*
+	 * Update media info (test only)
+	 */
+	
+	public static void getMediaUpdates(Connection conn, Instagram inst) {
+		System.out.println("Updating historical Instagram data...");
+		List<String> ids_to_update = new ArrayList<String>();
+		List<MediaFeedData> ids_updated = new ArrayList<MediaFeedData>();
+		ids_to_update = getIdsToUpdate(conn);
+		ids_updated = getMediaInfo(conn, inst, ids_to_update);
+		updateMedia(ids_updated, conn);
 	}
+	
+	private static List<String> getIdsToUpdate(Connection conn) {
+		System.out.println("Getting IDs...");
+		List<String> ids = new ArrayList<String>();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = conn.prepareStatement(get_media_IDs_to_update);
+			rs = ps.executeQuery();
+			
+			while(rs.next()) {
+				ids.add(rs.getString("id"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (rs != null) try { rs.close(); } catch (SQLException s) { };
+			if (ps != null) try { ps.close(); } catch (SQLException s) { };
+		}
+		
+		System.out.println("Found:" + ids.size());
+		return ids;
+	}
+	
+	private static List<MediaFeedData> getMediaInfo(Connection conn, Instagram inst, List<String> ids_to_update) {
+		
+		System.out.println("Getting media info...");
+		MediaFeedData mediaFeedData = null;
+		List<MediaFeedData> media_feed_list = new ArrayList<MediaFeedData>();
+		
+		for (String id : ids_to_update) {
+			try {
+				MediaInfoFeed mediaInfoFeed = inst.getMediaInfo(id);
+				mediaFeedData = mediaInfoFeed.getData();
+				media_feed_list.add(mediaFeedData);
+			} catch (InstagramBadRequestException b) {
+				System.out.println("Bad ID:" + id);
+			} catch (InstagramException i) {
+				i.printStackTrace();
+			}
+		}
+		
+		System.out.println("Found:" + media_feed_list.size());
+		return media_feed_list;
+	}
+	
+	private static void updateMedia(List<MediaFeedData> updated_ids, Connection conn) {
+		
+		System.out.println("Updating media...");
+		PreparedStatement ps = null;
+		try {
+			ps = conn.prepareStatement(update_media_info);
+			for (MediaFeedData mfd : updated_ids) {
+				
+				int likes = mfd.getLikes().getCount();
+				int comments = mfd.getComments().getCount();
+				String id = mfd.getId();
+				
+				ps.setInt(1, likes);
+				ps.setInt(2, comments);
+				ps.setString(3, id);
+				
+				ps.addBatch();
+			}
+			
+			ps.executeBatch();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (ps != null) try { ps.close(); } catch (SQLException s) { }
+		}	
+	}	
 }
