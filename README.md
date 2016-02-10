@@ -1,3 +1,5 @@
+Contact: Kar-Hai Chu (karhai at google email)
+
 Generic utility to parse social media data for network analyses. Includes:
 
 - Twitter miner: collect live Twitter data via Streaming API, and network-relevant user meta-data
