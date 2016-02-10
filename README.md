@@ -11,6 +11,13 @@ There are also some custom utilities built for specific purposes.
 As this software was written for a specific purpose, usage requires following a pre-existing outline.
 
 - originally written using Java7, it now uses Java8 (backward compatibility is not being tested)
-- data is stored in a MySQL database, but as there are no MySQL-specific scripts, other DB's will also serve 
-- Twitter and Instagram accounts
+- data is stored in a MySQL database, but as there are no MySQL-specific functions, other DB's will also serve 
+- Twitter and Instagram accounts --- which means configuration files with token data
 - certain Java libraries (although they are included in the package)
+- SQL scripts are used to export data for network analyses, eg. tweet/retweet network
+
+Some limitations:
+
+- Instagram's API allows streaming data collection for a single term, so the pseudo-realtime method is a delayed run on multiple keywords
+- Instagram's API returns partial user data when returning media data, so user information must be re-popularized
+- this is a software package written for a specific purpose, so lots of functions are customized

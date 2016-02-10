@@ -1,3 +1,9 @@
+#############################################
+#
+# retrieve content for Jennifer vape study
+#
+#############################################
+
 # Jennifer query, using any order
 SELECT *
 FROM tweets
