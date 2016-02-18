@@ -288,6 +288,11 @@ public class TcorsInstagramUtils {
 				// loop
 	
 				if (recentMediaNextPage != null) {
+					
+					if (min == "") {
+						min = String.valueOf(nextMax);
+					}
+					
 					while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
 						
 						mediaList.addAll(recentMediaNextPage.getData());

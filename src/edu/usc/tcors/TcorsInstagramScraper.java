@@ -112,8 +112,8 @@ public class TcorsInstagramScraper {
 			
 			try {
 				DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-				System.out.println(LocalDateTime.now().format(dtf) + "... Taking a 5 minute nap...\n\n");
-				Thread.sleep(300000); // 5 minute wait between ids chunks
+				System.out.println(LocalDateTime.now().format(dtf) + "... Taking a 10 minute nap...\n\n");
+				Thread.sleep(600000); // 10 minute wait between ids chunks
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

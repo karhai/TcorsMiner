@@ -129,3 +129,6 @@ cigarillo
 # jon request, additional survey terms -- added 1/27/2016
 blunt
 vaporcade
+# jon request, hookah study -- added 2/18/2016
+narguile
+shisha
