@@ -3,6 +3,7 @@ package edu.usc.tcors.utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import twitter4j.DirectMessage;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 
@@ -11,16 +12,17 @@ public class TcorsTwitterSurvey {
 	public static void main(String[] args) {
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
-		Connection conn = null;
+		// Connection conn = null;
 		Twitter t = u.getInstance();
 		
 		String survey_msg = "";
+		sendMsg(t,"hello","gvegayon");
 		
-		try {
-			conn = tmu.getDBConn("configuration.properties");
-		} catch (SQLException s) {
-			s.printStackTrace();
-		}
+//		try {
+//			conn = tmu.getDBConn("configuration.properties");
+//		} catch (SQLException s) {
+//			s.printStackTrace();
+//		}
 	}
 	
 	// retrieve survey message
@@ -39,11 +41,13 @@ public class TcorsTwitterSurvey {
 	}
 	
 	// process single name via DM
-	private void sendMsg(Twitter t, String msg, String user) {
+	private static void sendMsg(Twitter t, String msg, String user) {
 		try {
-			t.sendDirectMessage(user, msg);
+			DirectMessage dm = t.sendDirectMessage(user, msg);
+			System.out.println("Sent to:" + dm.getRecipientScreenName());
 		} catch (TwitterException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
+			System.out.println("Failed message:" + e.getMessage());
 		}
 	}
 	
