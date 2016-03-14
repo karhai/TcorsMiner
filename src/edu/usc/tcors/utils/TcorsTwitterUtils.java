@@ -277,7 +277,7 @@ public class TcorsTwitterUtils {
 		return check;
 	}
 	
-	private Twitter getInstance() {
+	public Twitter getInstance() {
 		ConfigurationBuilder cb = getConf();
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		Twitter twitter = tf.getInstance();

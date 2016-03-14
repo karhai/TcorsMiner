@@ -101,8 +101,8 @@ tip cigarillos
 king edward cigars
 royal gold cigars
 sweet coronella
-swisher blk
-swisher sweets
+# swisher blk # removed and added swisher
+# swisher sweets # removed and added swisher
 # vaporcon -- added 6/19/2015
 vapercon
 vapercon west
@@ -132,3 +132,13 @@ vaporcade
 # jon request, hookah study -- added 2/18/2016
 narguile
 shisha
+# companies being studied by S1 -- added 3/5/2016
+marlboro
+vuse
+swisher
+black and mild
+copenhagen
+camel
+snus
+pall mall
+newport
