@@ -276,7 +276,8 @@ public class TcorsInstagramUtils {
 				System.out.println("Done.");
 			} else {
 			
-				long nextMax = Long.parseLong(mediaFeed.getPagination().getNextMaxId());
+				String nextMaxString = mediaFeed.getPagination().getNextMaxId();
+				long nextMax = Long.parseLong(nextMaxString.replaceAll("[^\\d.]", ""));
 	//			System.out.println("nextMax: " + nextMax);
 				MediaFeed recentMediaNextPage = null;
 				try {
@@ -299,7 +300,8 @@ public class TcorsInstagramUtils {
 	//					System.out.println("mediaList size:" + mediaList.size());
 						System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus());
 				
-						nextMax = Long.parseLong(recentMediaNextPage.getPagination().getNextMaxId());
+						String nextMaxString2 = recentMediaNextPage.getPagination().getNextMaxId();
+						nextMax = Long.parseLong(nextMaxString2.replaceAll("[^\\d.]", ""));
 	//					System.out.println("next max:" + nextMax);
 						
 						try {
