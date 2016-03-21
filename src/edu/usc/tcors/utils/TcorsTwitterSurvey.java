@@ -2,6 +2,7 @@ package edu.usc.tcors.utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 
 import twitter4j.DirectMessage;
 import twitter4j.Twitter;
@@ -9,14 +10,17 @@ import twitter4j.TwitterException;
 
 public class TcorsTwitterSurvey {
 
+	private HashMap<String,String> users = new HashMap<String,String>();
+	
 	public static void main(String[] args) {
+		TcorsTwitterSurvey tts = new TcorsTwitterSurvey();
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		// Connection conn = null;
 		Twitter t = u.getInstance();
 		
 		String survey_msg = "";
-		sendMsg(t,"hello","gvegayon");
+		tts.sendMsg(t,"hello","gvegayon");
 		
 //		try {
 //			conn = tmu.getDBConn("configuration.properties");
@@ -41,14 +45,20 @@ public class TcorsTwitterSurvey {
 	}
 	
 	// process single name via DM
-	private static void sendMsg(Twitter t, String msg, String user) {
+	private void sendMsg(Twitter t, String msg, String user) {
 		try {
 			DirectMessage dm = t.sendDirectMessage(user, msg);
-			System.out.println("Sent to:" + dm.getRecipientScreenName());
+			// System.out.println("Sent to:" + dm.getRecipientScreenName());
+			markUser(user, "success");
 		} catch (TwitterException e) {
-			// e.printStackTrace();
-			System.out.println("Failed message:" + e.getMessage());
+			e.printStackTrace();
+			if(e.getErrorCode() == 150) {
+				markUser(user, "block");
+			} else {
+				System.out.println("Failed message:" + e.getMessage());
+			}
 		}
+		
 	}
 	
 	// process multiple names via mention
@@ -63,5 +73,18 @@ public class TcorsTwitterSurvey {
 		} catch (TwitterException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void markUser(String user, String mark) {
+		
+	}
+	
+	public HashMap<String, String> getUsers() {
+		return users;
+	}
+
+	// populate users to work with based on attributes from DB
+	public void setUsers(HashMap<String, String> users) {
+		this.users = users;
 	}
 }
