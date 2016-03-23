@@ -152,6 +152,16 @@ public class TcorsInstagramUtils {
 				Instagram instagram = new Instagram(secretToken);
 				getMediaUpdates(conn, instagram);
 			}
+			
+			/*
+			 * 
+			 */
+			
+			if (args[0].equals("test")) {
+				Token secretToken = getSecretToken();
+				Instagram instagram = new Instagram(secretToken);
+				getPostsByTerm(instagram, "ecig", "1211774315329006822", "");
+			}
 		}
 			
 		System.out.println("Completed!");
@@ -272,13 +282,22 @@ public class TcorsInstagramUtils {
 			System.out.println("Word:" + term + " // Step 1 size:" + mediaList.size());
 			System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
 	
+			Timestamp t_test = null;
+			t_test = Timestamp.valueOf("2016-03-22 12:00:00");
+			long l_test = t_test.getTime();
+			l_test = l_test/1000;
+			System.out.println("noon? " + l_test);
+			Timestamp ts = new Timestamp(l_test*1000);
+			System.out.println("noon? " + ts.toString());
+			
 			if (mediaFeed.getPagination().hasNextPage() == false) {
 				System.out.println("Done.");
 			} else {
 			
 				String nextMaxString = mediaFeed.getPagination().getNextMaxId();
-				long nextMax = Long.parseLong(nextMaxString.replaceAll("[^\\d.]", ""));
-	//			System.out.println("nextMax: " + nextMax);
+				System.out.println("nextMaxString:" + nextMaxString);
+				// long nextMax = Long.parseLong(nextMaxString.replaceAll("[^\\d.]", ""));
+				// System.out.println("nextMax: " + nextMax);
 				MediaFeed recentMediaNextPage = null;
 				try {
 					recentMediaNextPage = instagram.getRecentMediaNextPage(mediaFeed.getPagination());
@@ -290,19 +309,21 @@ public class TcorsInstagramUtils {
 	
 				if (recentMediaNextPage != null) {
 					
-					if (min == "") {
-						min = String.valueOf(nextMax);
-					}
+//					if (min == "") {
+//						min = String.valueOf(nextMax);
+//					}
 					
-					while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
+					// while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
+					while (recentMediaNextPage.getPagination() != null) {
 						
+						System.out.println("time? " + recentMediaNextPage.getData().get(0).getCreatedTime());
 						mediaList.addAll(recentMediaNextPage.getData());
-	//					System.out.println("mediaList size:" + mediaList.size());
+						// System.out.println("mediaList size:" + mediaList.size());
 						System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus());
 				
 						String nextMaxString2 = recentMediaNextPage.getPagination().getNextMaxId();
-						nextMax = Long.parseLong(nextMaxString2.replaceAll("[^\\d.]", ""));
-	//					System.out.println("next max:" + nextMax);
+						// nextMax = Long.parseLong(nextMaxString2.replaceAll("[^\\d.]", ""));
+						// System.out.println("next max:" + nextMax);
 						
 						try {
 							recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
