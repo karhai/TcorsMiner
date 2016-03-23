@@ -160,7 +160,7 @@ public class TcorsInstagramUtils {
 			if (args[0].equals("test")) {
 				Token secretToken = getSecretToken();
 				Instagram instagram = new Instagram(secretToken);
-				getPostsByTerm(instagram, "ecig", "1211774315329006822", "");
+				getPostsByTerm(instagram, "ecig", 1458701162L);
 			}
 		}
 			
@@ -221,7 +221,8 @@ public class TcorsInstagramUtils {
 		List<MediaFeedData> mediaList = null;
 		for (String term : terms) {
 			if (!term.contains("-") && !term.contains(" ")) {
-				mediaList = getPostsByTerm(instagram, term, min, max);
+				// mediaList = getPostsByTerm(instagram, term, min, max);
+				mediaList = getPostsByTerm(instagram, term, 0L);
 
 				System.out.println("Finished term:" + term + " with updated size " + mediaList.size());
 			
@@ -265,12 +266,12 @@ public class TcorsInstagramUtils {
 	
 	// TODO since the main scraper uses this function, will need an option to do limited run for recovery situations
 	
-	public static List<MediaFeedData> getPostsByTerm(Instagram instagram, String term, String min, String max) {
+	public static List<MediaFeedData> getPostsByTerm(Instagram instagram, String term, long last_time) {
 		TagMediaFeed mediaFeed = null;
 		List<MediaFeedData> mediaList = null;
 		
 		try {
-			mediaFeed = instagram.getRecentMediaTags(term, min, max, 33);
+			mediaFeed = instagram.getRecentMediaTags(term, "", "", 33);
 			mediaList = mediaFeed.getData();
 		} catch (InstagramException e) {
 			e.printStackTrace();
@@ -281,21 +282,13 @@ public class TcorsInstagramUtils {
 		if (mediaList != null) {
 			System.out.println("Word:" + term + " // Step 1 size:" + mediaList.size());
 			System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
-	
-			Timestamp t_test = null;
-			t_test = Timestamp.valueOf("2016-03-22 12:00:00");
-			long l_test = t_test.getTime();
-			l_test = l_test/1000;
-			System.out.println("noon? " + l_test);
-			Timestamp ts = new Timestamp(l_test*1000);
-			System.out.println("noon? " + ts.toString());
 			
 			if (mediaFeed.getPagination().hasNextPage() == false) {
 				System.out.println("Done.");
 			} else {
 			
-				String nextMaxString = mediaFeed.getPagination().getNextMaxId();
-				System.out.println("nextMaxString:" + nextMaxString);
+				// String nextMaxString = mediaFeed.getPagination().getNextMaxId();
+				// System.out.println("nextMaxString:" + nextMaxString);
 				// long nextMax = Long.parseLong(nextMaxString.replaceAll("[^\\d.]", ""));
 				// System.out.println("nextMax: " + nextMax);
 				MediaFeed recentMediaNextPage = null;
@@ -312,16 +305,23 @@ public class TcorsInstagramUtils {
 //					if (min == "") {
 //						min = String.valueOf(nextMax);
 //					}
-					
+
+					int current_size = mediaFeed.getData().size();
+					long current_time = Long.parseLong(mediaFeed.getData().get(current_size-1).getCreatedTime());
+
 					// while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
-					while (recentMediaNextPage.getPagination() != null) {
+					System.out.println("last_time:" + last_time);
+					System.out.println("current_time:" + current_time);
+					while (recentMediaNextPage.getPagination() != null && current_time > last_time) {
 						
-						System.out.println("time? " + recentMediaNextPage.getData().get(0).getCreatedTime());
+						current_size = recentMediaNextPage.getData().size();
+						current_time = Long.parseLong(recentMediaNextPage.getData().get(current_size-1).getCreatedTime());
+						Timestamp current_time_ts = new Timestamp(current_time * 1000);
 						mediaList.addAll(recentMediaNextPage.getData());
 						// System.out.println("mediaList size:" + mediaList.size());
-						System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus());
+						System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus() + " | current time:" + current_time + "=" + current_time_ts + " | last time:" + last_time + "=" + new Timestamp(last_time * 1000));
 				
-						String nextMaxString2 = recentMediaNextPage.getPagination().getNextMaxId();
+						// String nextMaxString2 = recentMediaNextPage.getPagination().getNextMaxId();
 						// nextMax = Long.parseLong(nextMaxString2.replaceAll("[^\\d.]", ""));
 						// System.out.println("next max:" + nextMax);
 						
