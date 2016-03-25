@@ -283,9 +283,14 @@ public class TcorsInstagramUtils {
 			System.out.println("Word:" + term + " // Step 1 size:" + mediaList.size());
 			// System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
 			
-			long current_time = Long.parseLong(mediaFeed.getData().get(0).getCreatedTime());
-			Timestamp current_time_ts = new Timestamp(current_time * 1000);
-			System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus() + " | current time:" + current_time_ts + "=" + current_time + " | last time:" + last_time + "=" + new Timestamp(last_time * 1000));
+			long current_time = 0L;
+			Timestamp current_time_ts = new Timestamp(current_time);
+			if (mediaFeed.getData().size() > 0) {
+				current_time = Long.parseLong(mediaFeed.getData().get(0).getCreatedTime());
+				current_time_ts = new Timestamp(current_time * 1000);
+				System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus() + " | current time:" + current_time_ts + "=" + current_time + " | last time:" + last_time + "=" + new Timestamp(last_time * 1000));
+			}
+			
 			if (mediaFeed.getPagination().hasNextPage() == false || last_time > current_time) {
 				System.out.println("Done.");
 			} else {
