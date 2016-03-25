@@ -160,7 +160,7 @@ public class TcorsInstagramUtils {
 			if (args[0].equals("test")) {
 				Token secretToken = getSecretToken();
 				Instagram instagram = new Instagram(secretToken);
-				getPostsByTerm(instagram, "ecig", 1458701162L);
+				getPostsByTerm(instagram, "vaporcade", 1458861031L);
 			}
 		}
 			
@@ -281,9 +281,12 @@ public class TcorsInstagramUtils {
 		
 		if (mediaList != null) {
 			System.out.println("Word:" + term + " // Step 1 size:" + mediaList.size());
-			System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
+			// System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus());
 			
-			if (mediaFeed.getPagination().hasNextPage() == false) {
+			long current_time = Long.parseLong(mediaFeed.getData().get(0).getCreatedTime());
+			Timestamp current_time_ts = new Timestamp(current_time * 1000);
+			System.out.println("API Limit:" + mediaFeed.getRemainingLimitStatus() + " | current time:" + current_time_ts + "=" + current_time + " | last time:" + last_time + "=" + new Timestamp(last_time * 1000));
+			if (mediaFeed.getPagination().hasNextPage() == false || last_time > current_time) {
 				System.out.println("Done.");
 			} else {
 			
@@ -306,20 +309,20 @@ public class TcorsInstagramUtils {
 //						min = String.valueOf(nextMax);
 //					}
 
-					int current_size = mediaFeed.getData().size();
-					long current_time = Long.parseLong(mediaFeed.getData().get(current_size-1).getCreatedTime());
+					int current_size = recentMediaNextPage.getData().size();
+					current_time = Long.parseLong(recentMediaNextPage.getData().get(current_size-1).getCreatedTime());
 
 					// while (recentMediaNextPage.getPagination() != null && nextMax > Long.parseLong(min)) {	
-					System.out.println("last_time:" + last_time);
-					System.out.println("current_time:" + current_time);
+					current_time_ts = new Timestamp(current_time * 1000);
+					System.out.println("API Limit:" + recentMediaNextPage.getRemainingLimitStatus() + " | current time:" + current_time + "=" + current_time_ts + " | last time:" + last_time + "=" + new Timestamp(last_time * 1000) + " -- PAGINATION LOOP CHECK");
 					while (recentMediaNextPage.getPagination() != null && current_time > last_time) {
 						
 						current_size = recentMediaNextPage.getData().size();
 						current_time = Long.parseLong(recentMediaNextPage.getData().get(current_size-1).getCreatedTime());
-						Timestamp current_time_ts = new Timestamp(current_time * 1000);
+						current_time_ts = new Timestamp(current_time * 1000);
 						mediaList.addAll(recentMediaNextPage.getData());
 						// System.out.println("mediaList size:" + mediaList.size());
-						System.out.println("Limit:" + recentMediaNextPage.getRemainingLimitStatus() + " | current time:" + current_time + "=" + current_time_ts + " | last time:" + last_time + "=" + new Timestamp(last_time * 1000));
+						System.out.println("API Limit:" + recentMediaNextPage.getRemainingLimitStatus() + " | current time:" + current_time + "=" + current_time_ts + " | last time:" + last_time + "=" + new Timestamp(last_time * 1000));
 				
 						// String nextMaxString2 = recentMediaNextPage.getPagination().getNextMaxId();
 						// nextMax = Long.parseLong(nextMaxString2.replaceAll("[^\\d.]", ""));
