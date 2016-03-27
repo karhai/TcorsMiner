@@ -38,7 +38,7 @@ public class TcorsInstagramScraper {
 			"FROM instagram_last_run " +
 			"WHERE id = 1";
 	
-	final String instagram_sql = "REPLACE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture, latitude, longitude) " +
+	final String instagram_sql = "INSERT IGNORE INTO instagram (id, createdTime, username, caption, likes, comments, url, location, storePicture, latitude, longitude) " +
 			"VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	
 	final String comments_sql = "REPLACE INTO instagram_comments (id, parent_id, username, comment, createdTime) " +
