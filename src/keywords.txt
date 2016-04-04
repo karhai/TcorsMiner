@@ -142,3 +142,7 @@ camel
 snus
 pall mall
 newport
+# new campaign -- added 4/1/2016
+wakeup
+# new campaign (more) -- added 4/4/2016
+cheerupbigtobacco

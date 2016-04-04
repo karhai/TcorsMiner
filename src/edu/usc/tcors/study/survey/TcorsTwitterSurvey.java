@@ -1,10 +1,13 @@
-package edu.usc.tcors.utils;
+package edu.usc.tcors.study.survey;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 
+import edu.usc.tcors.utils.TcorsMinerUtils;
+import edu.usc.tcors.utils.TcorsTwitterUtils;
 import twitter4j.DirectMessage;
+import twitter4j.Relationship;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 
@@ -19,8 +22,12 @@ public class TcorsTwitterSurvey {
 		// Connection conn = null;
 		Twitter t = u.getInstance();
 		
-		String survey_msg = "";
-		tts.sendMsg(t,"hello","gvegayon");
+		// test sending a message
+//		String survey_msg = "";
+//		tts.sendMsg(t,"hello","gvegayon");
+		
+		// test following someone
+		tts.followUser(t, "karhai");
 		
 //		try {
 //			conn = tmu.getDBConn("configuration.properties");
@@ -86,5 +93,37 @@ public class TcorsTwitterSurvey {
 	// populate users to work with based on attributes from DB
 	public void setUsers(HashMap<String, String> users) {
 		this.users = users;
+	}
+	
+	private void followUser(Twitter t, String user) {
+		try {
+			t.createFriendship(user);
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private Relationship getRelationship(Twitter t, String user) {
+		Relationship r = null;
+		try {
+			r = t.showFriendship("StudyTobacco", user);
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return r;
+	}
+	
+	private boolean isFollowing(Relationship r) {
+		return r.isSourceFollowingTarget();
+	}
+	
+	private boolean isFollowedBy(Relationship r) {
+		return r.isSourceFollowedByTarget();
+	}
+	
+	private void updateDB() {
+		
 	}
 }
