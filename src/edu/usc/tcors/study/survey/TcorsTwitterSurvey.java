@@ -1,7 +1,10 @@
 package edu.usc.tcors.study.survey;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 
 import edu.usc.tcors.utils.TcorsMinerUtils;
@@ -13,46 +16,81 @@ import twitter4j.TwitterException;
 
 public class TcorsTwitterSurvey {
 
-	private HashMap<String,String> users = new HashMap<String,String>();
+	private HashMap<String,Integer> users = new HashMap<String,Integer>();
+	
+	private final static String account_name = "USC_TCORS";
+	
+	final static String getInitialDmUsers = "SELECT userId " +
+			"FROM twitter_survey " +
+			"WHERE initialDM = 0 ";
 	
 	public static void main(String[] args) {
-		TcorsTwitterSurvey tts = new TcorsTwitterSurvey();
-		TcorsTwitterUtils u = new TcorsTwitterUtils();
+		// TcorsTwitterSurvey tts = new TcorsTwitterSurvey();
+
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
-		// Connection conn = null;
+		Connection conn = null;
+		try {
+			conn = tmu.getDBConn("configuration.properties");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Twitter t = u.getInstance();
 		
 		// test sending a message
-//		String survey_msg = "";
-//		tts.sendMsg(t,"hello","gvegayon");
+		sendInitialDMs(t, conn);
 		
 		// test following someone
-		tts.followUser(t, "karhai");
+		// followUsers(t);
 		
-//		try {
-//			conn = tmu.getDBConn("configuration.properties");
-//		} catch (SQLException s) {
-//			s.printStackTrace();
-//		}
+		// test friend RQs
+		// checkFriendRQs(t);
 	}
 	
-	// retrieve survey message
-	private void getSurveyMessage() {
+	private static void sendInitialDMs(Twitter t, Connection conn) {
 		
+		// get list of users from DB
+		getInitialDmUsers(conn);
+		
+		// for each user
+		String user = "karhai";
+		
+		// check if can send DM
+		getRelationship(t,user).canSourceDm();
+		
+		// if yes, send DM
+		sendMsg(t,"hello",user);
+		
+		// update their local status success or fail
+		
+		// if not, update local status of denial
+		
+		// repeat loop
+		
+		// update DB
 	}
 	
-	// retreve names from file
-	private void getNames(String file) {
+	private static void getInitialDmUsers(Connection conn) {
+		Statement st = null;
+		ResultSet rs = null;
+		try {
+			st = conn.createStatement();
+			rs = st.executeQuery(getInitialDmUsers);
 		
-	}
-	
-	// process multiple names via DM
-	private void sendMsgs() {
+			while (rs.next()) {
+				String userId = rs.getString("userId");
+				
+			}
 		
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	// process single name via DM
-	private void sendMsg(Twitter t, String msg, String user) {
+	private static void sendMsg(Twitter t, String msg, String user) {
 		try {
 			DirectMessage dm = t.sendDirectMessage(user, msg);
 			// System.out.println("Sent to:" + dm.getRecipientScreenName());
@@ -68,62 +106,58 @@ public class TcorsTwitterSurvey {
 		
 	}
 	
-	// process multiple names via mention
-	private void sendMentions() {
+	private static void markUser(String user, String mark) {
 		
 	}
-	
-	// process single name via mention
-	private void sendMention(Twitter t, String msg) {
-		try {
-			t.updateStatus(msg);
-		} catch (TwitterException e) {
-			e.printStackTrace();
-		}
-	}
 
-	private void markUser(String user, String mark) {
+	// 
+	private static void followUsers(Twitter t) {
 		
+		// get list of users from DB
+		
+		// for each user
+		
+		// follow user
+		followUser(t, "karhai");
+		
+		// repeat loop
+		
+		// update DB
 	}
 	
-	public HashMap<String, String> getUsers() {
-		return users;
-	}
-
-	// populate users to work with based on attributes from DB
-	public void setUsers(HashMap<String, String> users) {
-		this.users = users;
-	}
-	
-	private void followUser(Twitter t, String user) {
+	private static void followUser(Twitter t, String user) {
 		try {
 			t.createFriendship(user);
 		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	private Relationship getRelationship(Twitter t, String user) {
+	private static void checkFriendRQs(Twitter t) {
+		
+		// get list of users from DB
+		
+		// for each user
+		
+		// check relationship of user with self
+		Relationship r = getRelationship(t, "jenniferunger");
+		boolean following = r.isSourceFollowingTarget();
+		boolean followedBy = r.isSourceFollowedByTarget();
+		
+		// update local list as needed
+		
+		// repeat loop
+		
+		// update DB
+	}
+	
+	private static Relationship getRelationship(Twitter t, String user) {
 		Relationship r = null;
 		try {
-			r = t.showFriendship("StudyTobacco", user);
+			r = t.showFriendship(account_name, user);
 		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return r;
-	}
-	
-	private boolean isFollowing(Relationship r) {
-		return r.isSourceFollowingTarget();
-	}
-	
-	private boolean isFollowedBy(Relationship r) {
-		return r.isSourceFollowedByTarget();
-	}
-	
-	private void updateDB() {
-		
 	}
 }
