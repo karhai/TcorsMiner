@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import edu.usc.tcors.utils.TcorsMinerUtils;
@@ -18,60 +19,82 @@ public class TcorsTwitterSurvey {
 
 	private HashMap<String,Integer> users = new HashMap<String,Integer>();
 	
+	private static Connection conn = null;
+	
 	private final static String account_name = "USC_TCORS";
 	
 	final static String getInitialDmUsers = "SELECT userId " +
 			"FROM twitter_survey " +
 			"WHERE initialDM = 0 ";
 	
+	final static String updateInitialDmUsers = "UPDATE twitter_survey " +
+			"SET initialDM = ? " +
+			"WHERE screenName = ? ";
+	
 	public static void main(String[] args) {
-		// TcorsTwitterSurvey tts = new TcorsTwitterSurvey();
+		setConnection();
 
-		TcorsMinerUtils tmu = new TcorsMinerUtils();
-		Connection conn = null;
-		try {
-			conn = tmu.getDBConn("configuration.properties");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Twitter t = u.getInstance();
 		
 		// test sending a message
-		sendInitialDMs(t, conn);
+		sendInitialDMs(t);
 		
 		// test following someone
 		// followUsers(t);
 		
 		// test friend RQs
 		// checkFriendRQs(t);
+		
+		// close connection
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
-	private static void sendInitialDMs(Twitter t, Connection conn) {
+	private static void setConnection() {
+		try {
+			conn = TcorsMinerUtils.getDBConn("configuration.properties");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static void sendInitialDMs(Twitter t) {
 		
 		// get list of users from DB
-		getInitialDmUsers(conn);
+		HashMap<String,Integer> users = new HashMap<String,Integer>();
+		users = getInitialDmUsers();
 		
-		// for each user
-		String user = "karhai";
+		for(String user : users.keySet()) {
 		
-		// check if can send DM
-		getRelationship(t,user).canSourceDm();
-		
-		// if yes, send DM
-		sendMsg(t,"hello",user);
-		
-		// update their local status success or fail
-		
-		// if not, update local status of denial
-		
-		// repeat loop
+			// check if can send DM
+			Relationship r = null;
+			r = getRelationship(t,user);
+			
+			if(r.canSourceDm()) {
+				// if able to, send message and update as success
+				sendMsg(t,"hello",user);
+				users.put(user, 1);
+			} else {
+				// if not, update local status of denial
+				users.put(user, -1);
+			}
+		}
 		
 		// update DB
+		updateInitialDmUsers(users);
 	}
 	
-	private static void getInitialDmUsers(Connection conn) {
+	/**
+	 * @param conn
+	 * @return
+	 */
+	private static HashMap<String,Integer> getInitialDmUsers() {
+		HashMap<String,Integer> users = new HashMap<String,Integer>();
+		
 		Statement st = null;
 		ResultSet rs = null;
 		try {
@@ -80,25 +103,50 @@ public class TcorsTwitterSurvey {
 		
 			while (rs.next()) {
 				String userId = rs.getString("userId");
-				
+				users.put(userId, 0);
 			}
 		
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (st != null) { 
+				try {
+					st.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return users;
+	}
+	
+	private static void updateInitialDmUsers(HashMap<String,Integer> users) {
+		PreparedStatement ps = null;
+		try {
+			conn.prepareStatement(updateInitialDmUsers);
+			for (String user : users.keySet()) {
+				
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	// process single name via DM
+	/**
+	 * @param t
+	 * @param msg
+	 * @param user
+	 */
 	private static void sendMsg(Twitter t, String msg, String user) {
 		try {
 			DirectMessage dm = t.sendDirectMessage(user, msg);
-			// System.out.println("Sent to:" + dm.getRecipientScreenName());
-			markUser(user, "success");
+			System.out.println("Sent DM to:" + dm.getRecipientScreenName());
 		} catch (TwitterException e) {
 			e.printStackTrace();
 			if(e.getErrorCode() == 150) {
-				markUser(user, "block");
+				System.out.println("Blocked DM");
 			} else {
 				System.out.println("Failed message:" + e.getMessage());
 			}
@@ -106,11 +154,6 @@ public class TcorsTwitterSurvey {
 		
 	}
 	
-	private static void markUser(String user, String mark) {
-		
-	}
-
-	// 
 	private static void followUsers(Twitter t) {
 		
 		// get list of users from DB

@@ -54,7 +54,7 @@ public class TcorsMinerUtils {
 		return prop;
 	}
 	
-	public Connection getDBConn(String filename) throws SQLException {
+	public static Connection getDBConn(String filename) throws SQLException {
 		System.out.println("Creating a DB connection...");
 		Connection conn = null;
 		Properties prop = getProps(filename);
