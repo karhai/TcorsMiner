@@ -21,7 +21,7 @@ public class TcorsTwitterSurvey {
 	
 	private static Connection conn = null;
 	
-	private final static String account_name = "USC_TCORS";
+	private final static long account_id = 4750520330L;
 	
 	final static String getInitialDmUsers = "SELECT userId " +
 			"FROM twitter_survey " +
@@ -72,11 +72,12 @@ public class TcorsTwitterSurvey {
 		
 			// check if can send DM
 			Relationship r = null;
+			System.out.println("Checking relationship with:" + user);
 			r = getRelationship(t,user);
 			
 			if(r.canSourceDm()) {
 				// if able to, send message and update as success
-				sendMsg(t,"hello",user);
+				// sendMsg(t,"hello",user);
 				users.put(user, 1);
 			} else {
 				// if not, update local status of denial
@@ -124,13 +125,22 @@ public class TcorsTwitterSurvey {
 	private static void updateInitialDmUsers(HashMap<String,Integer> users) {
 		PreparedStatement ps = null;
 		try {
-			conn.prepareStatement(updateInitialDmUsers);
+			ps = conn.prepareStatement(updateInitialDmUsers);
 			for (String user : users.keySet()) {
-				
+				ps.setInt(1, 1);
+				ps.setString(2, user);
+				ps.addBatch();
 			}
+			
+			ps.executeBatch();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -197,9 +207,13 @@ public class TcorsTwitterSurvey {
 	private static Relationship getRelationship(Twitter t, String user) {
 		Relationship r = null;
 		try {
-			r = t.showFriendship(account_name, user);
+			r = t.showFriendship(4750520330L, Long.parseLong(user));
+			System.out.println("Found r:" + r.toString());
 		} catch (TwitterException e) {
 			e.printStackTrace();
+		} catch (NullPointerException n) {
+			System.out.println("NPE?");
+			n.printStackTrace();
 		}
 		return r;
 	}
