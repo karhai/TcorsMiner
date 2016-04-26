@@ -29,7 +29,7 @@ public class TcorsTwitterSurvey {
 	
 	final static String updateInitialDmUsers = "UPDATE twitter_survey " +
 			"SET initialDM = ? " +
-			"WHERE screenName = ? ";
+			"WHERE userId = ? ";
 	
 	public static void main(String[] args) {
 		setConnection();
@@ -78,9 +78,11 @@ public class TcorsTwitterSurvey {
 			if(r.canSourceDm()) {
 				// if able to, send message and update as success
 				// sendMsg(t,"hello",user);
+				System.out.println("Can dm:" + user);
 				users.put(user, 1);
 			} else {
 				// if not, update local status of denial
+				System.out.println("Can NOT dm:" + user);
 				users.put(user, -1);
 			}
 		}
@@ -124,10 +126,11 @@ public class TcorsTwitterSurvey {
 	
 	private static void updateInitialDmUsers(HashMap<String,Integer> users) {
 		PreparedStatement ps = null;
+		
 		try {
 			ps = conn.prepareStatement(updateInitialDmUsers);
 			for (String user : users.keySet()) {
-				ps.setInt(1, 1);
+				ps.setInt(1, users.get(user));
 				ps.setString(2, user);
 				ps.addBatch();
 			}
