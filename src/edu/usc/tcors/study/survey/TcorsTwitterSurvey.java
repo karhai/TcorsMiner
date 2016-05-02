@@ -25,12 +25,30 @@ public class TcorsTwitterSurvey {
 	
 	private final static long account_id = 4750520330L;
 	
-	private final static String direct_message = "";
+	private static String sn = "";
+	
+	private static String link = "";
+	
+	private final static String dm1 = "Hi ";
+	private final static String dm2 = ",\n\n" +
+			"We’re researchers from the University of Southern California, doing a survey about tobacco and social media. Your input would be very helpful, and you will get a gift card for your time!\n\n" +
+			"If you're willing to help, click here to get started: ";
+	private final static String dm3 = "\n\n" +
+			"To learn more about us:\n" +
+			"(323) 442-8211\n" +
+			"tobaccostudy@tcors.net\n" +
+			"https://tcors.usc.edu\n\n" +
+			"Thanks so much!\n" +
+			"USC";
+	
+	final static String getUserData = "SELECT screenName, url " +
+			"FROM twitter_survey " +
+			"WHERE userId = ? ";
 	
 	final static String getInitialDmUsers = "SELECT userId " +
 			"FROM twitter_survey " +
 			"WHERE initialDM = 0 " +
-			"LIMIT 170 ";
+			"LIMIT 20 ";
 	
 	final static String updateInitialDmUsers = "UPDATE twitter_survey " +
 			"SET initialDM = ? " +
@@ -40,7 +58,7 @@ public class TcorsTwitterSurvey {
 			"FROM twitter_survey " +
 			"WHERE initialDM = -1 " +
 			"AND followRQ = 0 " +
-			"LIMIT 170 ";
+			"LIMIT 100 ";
 	
 	final static String updateFollowRqUsers = "UPDATE twitter_survey " +
 			"SET followRQ = ? " + 
@@ -72,16 +90,21 @@ public class TcorsTwitterSurvey {
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Twitter t = u.getInstance();
 		
-		// test sending a message
+		// sending a message
 		// sendInitialDMs(t);
 		
-		// test following someone
+		// following someone
 		// followUsers(t);
 		
-		// test friend RQs
+		// friend RQs
 		// checkFriendRQs(t);
 		
-		// test send final DM
+		// send final DM
+		
+		/*
+		 * TODO MERGE WITH USER DATA CODE
+		 */
+		
 		// sendFinalDMs(t);
 		
 		// close connection
@@ -118,8 +141,19 @@ public class TcorsTwitterSurvey {
 			
 			if(r.canSourceDm()) {
 				// if able to, send message and update as success
-				sendMsg(t,"hello",user);
+				
+				String[] user_data = new String[2];
+				System.out.println("looking for:" + user);
+				user_data = getUserData(getUserData,user);
+				
+				sn = user_data[0];
+				link = user_data[1];
+				
+				String direct_message = getMessage(sn, link);
+				
+				sendMsg(t,direct_message,user);
 				// System.out.println("Can dm:" + user);
+				// System.out.println("sn:" + sn + " link:" + link);
 				users.put(user, 1);
 			} else {
 				// if not, update local status of denial
@@ -130,6 +164,17 @@ public class TcorsTwitterSurvey {
 		
 		// update DB
 		updateUsers(users, updateInitialDmUsers);
+		
+		try {
+			System.out.println(t.getRateLimitStatus());
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private static String getMessage(String sn, String link) {
+		return dm1 + sn + dm2 + link + dm3;
 	}
 	
 	/**
@@ -163,6 +208,43 @@ public class TcorsTwitterSurvey {
 		}
 		
 		return users;
+	}
+	
+	/**
+	 * @param conn
+	 * @return
+	 */
+	private static String[] getUserData(String sql, String userId) {
+		String[] user_data = new String[2];
+		
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		try {
+			st = conn.prepareStatement(sql);
+			st.setString(1, userId);
+			
+			rs = st.executeQuery();
+		
+			if (rs.next()) {
+				String screen_name = rs.getString("screenName");
+				String url = rs.getString("url");
+				user_data[0] = screen_name;
+				user_data[1] = url;
+			}
+		
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (st != null) { 
+				try {
+					st.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return user_data;
 	}
 	
 	/**
@@ -230,6 +312,15 @@ public class TcorsTwitterSurvey {
 		for(String user : users.keySet()) {
 			// follow user
 			int success = followUser(t, user);
+			
+			System.out.println("Making friends with:" + user);
+			
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
+			
 			users.put(user, success);
 		}
 		
@@ -254,6 +345,9 @@ public class TcorsTwitterSurvey {
 		return success;
 	}
 	
+	/**
+	 * @param t
+	 */
 	private static void checkFriendRQs(Twitter t) {
 		
 		// get list of users from DB
@@ -281,11 +375,16 @@ public class TcorsTwitterSurvey {
 		updateUsers(users_update, updateFriendRqUsers);
 	}
 	
+	/**
+	 * @param t
+	 * @param user
+	 * @return
+	 */
 	private static Relationship getRelationship(Twitter t, String user) {
 		Relationship r = null;
 		try {
 			r = t.showFriendship(account_id, Long.parseLong(user));
-			System.out.println("Rate status:" + t.getRateLimitStatus());
+			// System.out.println("Rate status:" + t.getRateLimitStatus());
 			// System.out.println("Found r:" + r.toString());
 		} catch (TwitterException e) {
 			e.printStackTrace();
@@ -296,6 +395,11 @@ public class TcorsTwitterSurvey {
 		return r;
 	}
 
+	/**
+	 * @param t
+	 * @param user_ids
+	 * @return
+	 */
 	private static ResponseList<Friendship> getFriendships(Twitter t, long[] user_ids) {
 		ResponseList<Friendship> friendships = null;
 		try {
@@ -306,6 +410,9 @@ public class TcorsTwitterSurvey {
 		return friendships;
 	}
 
+	/**
+	 * @param t
+	 */
 	private static void sendFinalDMs(Twitter t) {
 		
 		// get list of users from DB
