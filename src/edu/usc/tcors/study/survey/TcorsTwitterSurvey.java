@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 
 import edu.usc.tcors.utils.TcorsMinerUtils;
 import edu.usc.tcors.utils.TcorsTwitterUtils;
@@ -31,13 +33,13 @@ public class TcorsTwitterSurvey {
 	
 	private final static String dm1 = "Hi ";
 	private final static String dm2 = ",\n\n" +
-			"We’re researchers from the University of Southern California, doing a survey about tobacco and social media. Your input would be very helpful, and you will get a gift card for your time!\n\n" +
+			"We’re researchers from the University of Southern California, doing a survey about tobacco and social media. Your input would be very helpful (even if you are not a smoker), and you will get a gift card for your time!\n\n" +
 			"If you're willing to help, click here to get started: ";
 	private final static String dm3 = "\n\n" +
 			"To learn more about us:\n" +
+			"https://tcors.usc.edu\n" +
 			"(323) 442-8211\n" +
-			"tobaccostudy@tcors.net\n" +
-			"https://tcors.usc.edu\n\n" +
+			"tobaccostudy@tcors.net\n\n" +
 			"Thanks so much!\n" +
 			"USC";
 	
@@ -48,7 +50,8 @@ public class TcorsTwitterSurvey {
 	final static String getInitialDmUsers = "SELECT userId " +
 			"FROM twitter_survey " +
 			"WHERE initialDM = 0 " +
-			"LIMIT 20 ";
+			"AND type = \"OL\" " +
+			"LIMIT 1 ";
 	
 	final static String updateInitialDmUsers = "UPDATE twitter_survey " +
 			"SET initialDM = ? " +
@@ -58,16 +61,17 @@ public class TcorsTwitterSurvey {
 			"FROM twitter_survey " +
 			"WHERE initialDM = -1 " +
 			"AND followRQ = 0 " +
-			"LIMIT 100 ";
+			"LIMIT 50 ";
 	
 	final static String updateFollowRqUsers = "UPDATE twitter_survey " +
 			"SET followRQ = ? " + 
 			"WHERE userId = ? ";
 	
-	final static String getFriendRqUsers = "SELECT userId " + 
+	final static String getFriendRqUsers = "SELECT userId, friendRQ " + 
 			"FROM twitter_survey " +
 			"WHERE followRQ = 1 " +
-			"AND friendRQ = 0 " +
+			"AND friendRQ < 1 " +
+			"ORDER BY friendRQ DESC " +
 			"LIMIT 100 ";
 	
 	final static String updateFriendRqUsers = "UPDATE twitter_survey " +
@@ -100,12 +104,16 @@ public class TcorsTwitterSurvey {
 		// checkFriendRQs(t);
 		
 		// send final DM
-		
-		/*
-		 * TODO MERGE WITH USER DATA CODE
-		 */
-		
 		// sendFinalDMs(t);
+		
+		// testDM(t);
+		
+		try {
+			System.out.println("Limits:" + t.getRateLimitStatus());
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		// close connection
 		try {
@@ -130,7 +138,7 @@ public class TcorsTwitterSurvey {
 		
 		// get list of users from DB
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
-		users = getUsers(getInitialDmUsers);
+		users = getUsers(getInitialDmUsers,"");
 		
 		for(String user : users.keySet()) {
 		
@@ -151,10 +159,19 @@ public class TcorsTwitterSurvey {
 				
 				String direct_message = getMessage(sn, link);
 				
-				sendMsg(t,direct_message,user);
-				// System.out.println("Can dm:" + user);
-				// System.out.println("sn:" + sn + " link:" + link);
-				users.put(user, 1);
+				int result = 0;
+				result = sendMsg(t,direct_message,user);
+				users.put(user, result);
+				
+				try {
+					Random rand = new Random();
+					int randNum = rand.nextInt(11) + 20;
+					System.out.println("Waiting " + randNum + " seconds...");
+					Thread.sleep(randNum * 1000); // 1000 = 1 sec
+				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+				}
+				
 			} else {
 				// if not, update local status of denial
 				// System.out.println("Can NOT dm:" + user);
@@ -164,13 +181,6 @@ public class TcorsTwitterSurvey {
 		
 		// update DB
 		updateUsers(users, updateInitialDmUsers);
-		
-		try {
-			System.out.println(t.getRateLimitStatus());
-		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	
 	private static String getMessage(String sn, String link) {
@@ -181,7 +191,7 @@ public class TcorsTwitterSurvey {
 	 * @param conn
 	 * @return
 	 */
-	private static HashMap<String,Integer> getUsers(String sql) {
+	private static HashMap<String,Integer> getUsers(String sql, String var) {
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
 		
 		Statement st = null;
@@ -192,7 +202,12 @@ public class TcorsTwitterSurvey {
 		
 			while (rs.next()) {
 				String userId = rs.getString("userId");
-				users.put(userId, 0);
+				if (var != "") {
+					Integer param = rs.getInt(var);
+					users.put(userId, param);
+				} else {
+					users.put(userId, 0);
+				}
 			}
 		
 		} catch (SQLException e) {
@@ -284,19 +299,29 @@ public class TcorsTwitterSurvey {
 	 * @param msg
 	 * @param user
 	 */
-	private static void sendMsg(Twitter t, String msg, String user) {
+	private static int sendMsg(Twitter t, String msg, String user) {
+		int ret = 0;
 		try {
 			DirectMessage dm = t.sendDirectMessage(Long.parseLong(user), msg);
 			System.out.println("Sent DM to:" + dm.getRecipientScreenName());
+			ret = 1;
 		} catch (TwitterException e) {
 			e.printStackTrace();
+			ret = -100;
+			
 			if(e.getErrorCode() == 150) {
 				System.out.println("Blocked DM");
+				ret = -150;
 			} else {
-				System.out.println("Failed message:" + e.getMessage());
+				if(e.getErrorCode() == 226) {
+					System.out.println("Treated as spam");
+					ret = -226;
+				} else {
+					System.out.println("Failed message:" + e.getMessage());
+				}
 			}
 		}
-		
+		return ret;
 	}
 	
 	/**
@@ -306,7 +331,7 @@ public class TcorsTwitterSurvey {
 		
 		// get list of users from DB
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
-		users = getUsers(getFollowRqUsers);
+		users = getUsers(getFollowRqUsers,"");
 		
 		// for each user
 		for(String user : users.keySet()) {
@@ -316,7 +341,10 @@ public class TcorsTwitterSurvey {
 			System.out.println("Making friends with:" + user);
 			
 			try {
-				Thread.sleep(2000);
+				Random rand = new Random();
+				int randNum = rand.nextInt(11) + 10;
+				System.out.println("Waiting " + randNum + " seconds...");
+				Thread.sleep(randNum * 1000); // 1000 = 1 sec
 			} catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
 			}
@@ -352,8 +380,8 @@ public class TcorsTwitterSurvey {
 		
 		// get list of users from DB
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
-		users = getUsers(getFriendRqUsers);
-
+		users = getUsers(getFriendRqUsers,"friendRQ");
+		
 		long[] user_ids = new long[100];
 		int count = 0;
 		for(String user : users.keySet()) {
@@ -363,15 +391,21 @@ public class TcorsTwitterSurvey {
 		
 		ResponseList<Friendship> friendships = getFriendships(t, user_ids);
 		
+		int new_friends = 0;
 		HashMap<String,Integer> users_update = new HashMap<String,Integer>();
 		for(Friendship f : friendships) {
+			String userId = Long.toString(f.getId());
 			if(f.isFollowedBy()) {
-				long userId = f.getId();
-				users_update.put(Long.toString(userId), 1);
+				users_update.put(userId, 1);
+				new_friends++;
+			} else {
+				Integer i = users.get(userId);
+				users_update.put(userId, --i);
 			}
 		}
 		
 		// update DB
+		System.out.println("Adding new friends:" + new_friends);
 		updateUsers(users_update, updateFriendRqUsers);
 	}
 	
@@ -417,14 +451,50 @@ public class TcorsTwitterSurvey {
 		
 		// get list of users from DB
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
-		users = getUsers(getFinalDmUsers);
+		users = getUsers(getFinalDmUsers,"");
 		
 		for(String user : users.keySet()) {
-			sendMsg(t,"hello",user);
-			users.put(user, 1);
+
+			String[] user_data = new String[2];
+			System.out.println("looking for:" + user);
+			user_data = getUserData(getUserData,user);
+			
+			sn = user_data[0];
+			link = user_data[1];
+			
+			String direct_message = getMessage(sn, link);
+			
+			int res = 0;
+			res = sendMsg(t,direct_message,user);
+			
+			try {
+				Random rand = new Random();
+				int randNum = rand.nextInt(11) + 10;
+				System.out.println("Waiting " + randNum + " seconds...");
+				Thread.sleep(randNum * 1000); // 1000 = 1 sec
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
+			
+			users.put(user, res);
 		}
 		
 		// update DB
 		updateUsers(users, updateFinalDmUsers);
+	}
+	
+	private static void testDM(Twitter t) {
+		List<DirectMessage> messages = null;
+		try {
+			messages = t.getDirectMessages();
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("Size:" + messages.size());
+		for (DirectMessage dm : messages) {
+			System.out.println("From:" + dm.getSenderScreenName() + " -- " + dm.getText());
+		}
 	}
 }
