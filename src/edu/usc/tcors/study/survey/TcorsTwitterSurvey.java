@@ -95,7 +95,7 @@ public class TcorsTwitterSurvey {
 		Twitter t = u.getInstance();
 		
 		// sending a message
-		// sendInitialDMs(t);
+		sendInitialDMs(t);
 		
 		// following someone
 		// followUsers(t);

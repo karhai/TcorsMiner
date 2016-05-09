@@ -277,6 +277,10 @@ public class TcorsInstagramUtils {
 			e.printStackTrace();
 		} catch (NullPointerException n) {
 			n.printStackTrace();
+		} catch (IllegalStateException i) {
+			i.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
 		/*
@@ -341,6 +345,10 @@ public class TcorsInstagramUtils {
 						try {
 							recentMediaNextPage = instagram.getRecentMediaNextPage(recentMediaNextPage.getPagination());
 						} catch (InstagramException e) {
+							e.printStackTrace();
+						} catch (IllegalStateException i) {
+							i.printStackTrace();
+						} catch (Exception e) {
 							e.printStackTrace();
 						}
 					}
