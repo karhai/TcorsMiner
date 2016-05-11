@@ -34,7 +34,7 @@ public class TcorsTwitterSurvey {
 	private final static String dm1 = "Hi ";
 	private final static String dm2 = ",\n\n" +
 			"We’re researchers from the University of Southern California, doing a survey about tobacco and social media. Your input would be very helpful (even if you are not a smoker), and you will get a gift card for your time!\n\n" +
-			"If you're willing to help, click here to get started: ";
+			"If you live in the United States and are willing to help, click here to get started: ";
 	private final static String dm3 = "\n\n" +
 			"To learn more about us:\n" +
 			"https://tcors.usc.edu\n" +
@@ -44,47 +44,47 @@ public class TcorsTwitterSurvey {
 			"USC";
 	
 	final static String getUserData = "SELECT screenName, url " +
-			"FROM twitter_survey " +
+			"FROM s3_survey " +
 			"WHERE userId = ? ";
 	
 	final static String getInitialDmUsers = "SELECT userId " +
-			"FROM twitter_survey " +
+			"FROM s3_survey " +
 			"WHERE initialDM = 0 " +
 			"AND type = \"OL\" " +
 			"LIMIT 1 ";
 	
-	final static String updateInitialDmUsers = "UPDATE twitter_survey " +
+	final static String updateInitialDmUsers = "UPDATE s3_survey " +
 			"SET initialDM = ? " +
 			"WHERE userId = ? ";
 
 	final static String getFollowRqUsers = "SELECT userId " +
-			"FROM twitter_survey " +
+			"FROM s3_survey " +
 			"WHERE initialDM = -1 " +
-			"AND followRQ = 0 " +
-			"LIMIT 50 ";
+			"AND (followRQ = 0 OR followRQ = -1) " +
+			"LIMIT 100 ";
 	
-	final static String updateFollowRqUsers = "UPDATE twitter_survey " +
+	final static String updateFollowRqUsers = "UPDATE s3_survey " +
 			"SET followRQ = ? " + 
 			"WHERE userId = ? ";
 	
 	final static String getFriendRqUsers = "SELECT userId, friendRQ " + 
-			"FROM twitter_survey " +
+			"FROM s3_survey " +
 			"WHERE followRQ = 1 " +
 			"AND friendRQ < 1 " +
 			"ORDER BY friendRQ DESC " +
 			"LIMIT 100 ";
 	
-	final static String updateFriendRqUsers = "UPDATE twitter_survey " +
+	final static String updateFriendRqUsers = "UPDATE s3_survey " +
 			"SET friendRQ = ? " +
 			"WHERE userId = ? ";
 	
 	final static String getFinalDmUsers = "SELECT userId " +
-			"FROM twitter_survey " + 
+			"FROM s3_survey " + 
 			"WHERE friendRQ = 1 " +
 			"AND finalDM = 0 " +
-			"LIMIT 170 ";
+			"LIMIT 1 ";
 	
-	final static String updateFinalDmUsers = "UPDATE twitter_survey " +
+	final static String updateFinalDmUsers = "UPDATE s3_survey " +
 			"SET finalDM = ? " +
 			"WHERE userId = ? ";
 	
@@ -95,7 +95,7 @@ public class TcorsTwitterSurvey {
 		Twitter t = u.getInstance();
 		
 		// sending a message
-		sendInitialDMs(t);
+		// sendInitialDMs(t);
 		
 		// following someone
 		// followUsers(t);
@@ -147,7 +147,7 @@ public class TcorsTwitterSurvey {
 			// System.out.println("Checking relationship with:" + user);
 			r = getRelationship(t,user);
 			
-			if(r.canSourceDm()) {
+			if(r != null && r.canSourceDm()) {
 				// if able to, send message and update as success
 				
 				String[] user_data = new String[2];
@@ -368,7 +368,17 @@ public class TcorsTwitterSurvey {
 			success = 1;
 			// System.out.println("rate status:" + t.getRateLimitStatus());
 		} catch (TwitterException e) {
-			e.printStackTrace();
+			if (e.getErrorCode() == 108) {
+				System.out.println("Unknown user");
+				success = -108;
+			} else {
+				if (e.getErrorCode() == 250) {
+					System.out.println("Requires age screen");
+					success = -250;
+				} else {
+					e.printStackTrace();
+				}
+			}
 		}
 		return success;
 	}
@@ -423,7 +433,7 @@ public class TcorsTwitterSurvey {
 		} catch (TwitterException e) {
 			e.printStackTrace();
 		} catch (NullPointerException n) {
-			// System.out.println("NPE?");
+			System.out.println("User not found:" + user);
 			n.printStackTrace();
 		}
 		return r;
