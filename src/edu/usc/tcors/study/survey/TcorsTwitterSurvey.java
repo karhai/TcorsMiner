@@ -49,9 +49,9 @@ public class TcorsTwitterSurvey {
 	
 	final static String getInitialDmUsers = "SELECT userId " +
 			"FROM s3_survey " +
-			"WHERE initialDM = 0 " +
-			"AND type = \"OL\" " +
-			"LIMIT 1 ";
+			"WHERE (initialDM = 0 OR initialDM = -226)" +
+			// "AND type = \"OL\" " +
+			"LIMIT 100 ";
 	
 	final static String updateInitialDmUsers = "UPDATE s3_survey " +
 			"SET initialDM = ? " +
@@ -111,7 +111,6 @@ public class TcorsTwitterSurvey {
 		try {
 			System.out.println("Limits:" + t.getRateLimitStatus());
 		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -139,43 +138,60 @@ public class TcorsTwitterSurvey {
 		// get list of users from DB
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
 		users = getUsers(getInitialDmUsers,"");
+		int wait_time = 50;
 		
 		for(String user : users.keySet()) {
 		
 			// check if can send DM
 			Relationship r = null;
 			// System.out.println("Checking relationship with:" + user);
+			
 			r = getRelationship(t,user);
 			
-			if(r != null && r.canSourceDm()) {
-				// if able to, send message and update as success
-				
-				String[] user_data = new String[2];
-				System.out.println("looking for:" + user);
-				user_data = getUserData(getUserData,user);
-				
-				sn = user_data[0];
-				link = user_data[1];
-				
-				String direct_message = getMessage(sn, link);
-				
-				int result = 0;
-				result = sendMsg(t,direct_message,user);
-				users.put(user, result);
-				
-				try {
-					Random rand = new Random();
-					int randNum = rand.nextInt(11) + 20;
-					System.out.println("Waiting " + randNum + " seconds...");
-					Thread.sleep(randNum * 1000); // 1000 = 1 sec
-				} catch (InterruptedException ex) {
-					Thread.currentThread().interrupt();
-				}
-				
+			if (r == null) {
+				users.put(user, -50);
 			} else {
-				// if not, update local status of denial
-				// System.out.println("Can NOT dm:" + user);
-				users.put(user, -1);
+			
+				if(r.canSourceDm()) {
+					// if able to, send message and update as success
+					
+					String[] user_data = new String[2];
+					System.out.println("looking for:" + user);
+					user_data = getUserData(getUserData,user);
+					
+					sn = user_data[0];
+					link = user_data[1];
+					
+					String direct_message = getMessage(sn, link);
+					
+					int result = 0;
+					result = sendMsg(t,direct_message,user);
+					users.put(user, result);
+					
+					// dynamic adjustment for time to manage spam filter
+					
+					if (result == -226) {
+						wait_time = wait_time * 2;
+					} else {
+						if (wait_time > 50) {
+							wait_time = wait_time - 10;
+						}
+					}
+					
+					try {
+						Random rand = new Random();
+						int randNum = rand.nextInt(11) + wait_time;
+						System.out.println("Waiting " + randNum + " seconds...");
+						Thread.sleep(randNum * 1000); // 1000 = 1 sec
+					} catch (InterruptedException ex) {
+						Thread.currentThread().interrupt();
+					}
+					
+				} else {
+					// if not, update local status of denial
+					// System.out.println("Can NOT dm:" + user);
+					users.put(user, -1);
+				}
 			}
 		}
 		
@@ -431,7 +447,13 @@ public class TcorsTwitterSurvey {
 			// System.out.println("Rate status:" + t.getRateLimitStatus());
 			// System.out.println("Found r:" + r.toString());
 		} catch (TwitterException e) {
-			e.printStackTrace();
+			switch(e.getErrorCode()) {
+				case 50: 
+					System.out.println("User not found");
+					break;
+				default:
+					e.printStackTrace(); 
+			}
 		} catch (NullPointerException n) {
 			System.out.println("User not found:" + user);
 			n.printStackTrace();
