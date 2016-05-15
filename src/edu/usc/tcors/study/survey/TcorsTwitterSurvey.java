@@ -82,7 +82,7 @@ public class TcorsTwitterSurvey {
 			"FROM s3_survey " + 
 			"WHERE friendRQ = 1 " +
 			"AND finalDM = 0 " +
-			"LIMIT 1 ";
+			"LIMIT 10 ";
 	
 	final static String updateFinalDmUsers = "UPDATE s3_survey " +
 			"SET finalDM = ? " +
@@ -168,24 +168,7 @@ public class TcorsTwitterSurvey {
 					result = sendMsg(t,direct_message,user);
 					users.put(user, result);
 					
-					// dynamic adjustment for time to manage spam filter
-					
-					if (result == -226) {
-						wait_time = wait_time * 2;
-					} else {
-						if (wait_time > 50) {
-							wait_time = wait_time - 10;
-						}
-					}
-					
-					try {
-						Random rand = new Random();
-						int randNum = rand.nextInt(11) + wait_time;
-						System.out.println("Waiting " + randNum + " seconds...");
-						Thread.sleep(randNum * 1000); // 1000 = 1 sec
-					} catch (InterruptedException ex) {
-						Thread.currentThread().interrupt();
-					}
+					wait_time = delay(result, wait_time);
 					
 				} else {
 					// if not, update local status of denial
@@ -197,6 +180,37 @@ public class TcorsTwitterSurvey {
 		
 		// update DB
 		updateUsers(users, updateInitialDmUsers);
+	}
+	
+	
+	
+	/**
+	 * @param result
+	 * @param wait_time
+	 * @return
+	 */
+	private static int delay(int result, int wait_time) {
+		
+		int new_wait = wait_time;
+		
+		if (result == -226) {
+			new_wait = wait_time * 2;
+		} else {
+			if (wait_time > 50) {
+				new_wait = wait_time - 10;
+			}
+		}
+		
+		try {
+			Random rand = new Random();
+			int randNum = rand.nextInt(11) + new_wait;
+			System.out.println("Waiting " + randNum + " seconds...");
+			Thread.sleep(randNum * 1000); // 1000 = 1 sec
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+		
+		return new_wait;
 	}
 	
 	private static String getMessage(String sn, String link) {
@@ -484,6 +498,7 @@ public class TcorsTwitterSurvey {
 		// get list of users from DB
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
 		users = getUsers(getFinalDmUsers,"");
+		int wait_time = 50;
 		
 		for(String user : users.keySet()) {
 
@@ -498,17 +513,9 @@ public class TcorsTwitterSurvey {
 			
 			int res = 0;
 			res = sendMsg(t,direct_message,user);
-			
-			try {
-				Random rand = new Random();
-				int randNum = rand.nextInt(11) + 10;
-				System.out.println("Waiting " + randNum + " seconds...");
-				Thread.sleep(randNum * 1000); // 1000 = 1 sec
-			} catch (InterruptedException ex) {
-				Thread.currentThread().interrupt();
-			}
-			
 			users.put(user, res);
+			
+			wait_time = delay(res, wait_time);
 		}
 		
 		// update DB

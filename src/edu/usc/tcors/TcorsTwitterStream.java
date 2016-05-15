@@ -18,6 +18,7 @@ import java.util.Properties;
 
 import edu.usc.tcors.utils.TcorsMinerUtils;
 import twitter4j.FilterQuery;
+import twitter4j.Place;
 import twitter4j.StallWarning;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
@@ -181,8 +182,8 @@ public class TcorsTwitterStream {
 	 */
 	
 	private void storeTweetData(Connection conn, Status status) throws SQLException {
-		String sql = "INSERT INTO tweets (id, createdAt, text, userId, isRetweet, latitude, longitude)" +
-				"VALUES (?,?,?,?,?,?,?)";
+		String sql = "INSERT INTO tweets (id, createdAt, text, userId, isRetweet, latitude, longitude, place_country, place_name, place_type)" +
+				"VALUES (?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement ps = null;
 		
 		try {
@@ -198,6 +199,21 @@ public class TcorsTwitterStream {
 			} else {
 				ps.setDouble(6, 0);
 				ps.setDouble(7, 0);
+			}
+			if (status.getPlace() != null) {
+				Place p = status.getPlace();
+				
+				String c = p.getCountry();
+				String full_name = p.getFullName();
+				String type = p.getPlaceType();
+				
+				ps.setString(8, c);
+				ps.setString(9, full_name);
+				ps.setString(10, type);
+			} else {
+				ps.setString(8, "");
+				ps.setString(9, "");
+				ps.setString(10, "");
 			}
 			
 			ps.execute();
