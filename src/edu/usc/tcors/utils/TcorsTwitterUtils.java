@@ -42,13 +42,13 @@ public class TcorsTwitterUtils {
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		TcorsMinerUtils tmu = new TcorsMinerUtils();
 		Connection conn  = null;
-		try {
-			conn = tmu.getDBConn("configuration.properties");
+//		try {
+//			conn = tmu.getDBConn("configuration.properties");
 			
 			// maxId = 609485130428743680L
 			// u.search("cigarettes", 623798359074050048L, 623892873835085824L, conn);
 			
-			u.getTweetsByID(727717013406269444L, 727730743565275136L, conn);
+//			u.getTweetsByID(727717013406269444L, 727730743565275136L, conn);
 			
 			// u.getUserHistoricalTweets(2231009702L, conn);
 			
@@ -61,16 +61,16 @@ public class TcorsTwitterUtils {
 //			// store profiles in DB
 //			u.storeUserDataFromList(conn, users);
 			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-//		try {
-//			u.getRandomTwitterUsers(1000);
-//		} catch (TwitterException e) {
-//			// TODO Auto-generated catch block
+//		} catch (SQLException e) {
 //			e.printStackTrace();
 //		}
+		
+		try {
+			u.getRandomTwitterUsers(2000);
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void getRandomTwitterUsers(final int count) throws TwitterException {

@@ -1,5 +1,6 @@
 package edu.usc.tcors.study.survey;
 
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -49,9 +50,9 @@ public class TcorsTwitterSurvey {
 	
 	final static String getInitialDmUsers = "SELECT userId " +
 			"FROM s3_survey " +
-			"WHERE (initialDM = 0 OR initialDM = -226)" +
-			// "AND type = \"OL\" " +
-			"LIMIT 100 ";
+			"WHERE initialDM = 0 " +
+			// "AND (type = \"follower\" OR type = \"OL\")" +
+			"LIMIT 500 ";
 	
 	final static String updateInitialDmUsers = "UPDATE s3_survey " +
 			"SET initialDM = ? " +
@@ -61,7 +62,7 @@ public class TcorsTwitterSurvey {
 			"FROM s3_survey " +
 			"WHERE initialDM = -1 " +
 			"AND (followRQ = 0 OR followRQ = -1) " +
-			"LIMIT 100 ";
+			"LIMIT 500 ";
 	
 	final static String updateFollowRqUsers = "UPDATE s3_survey " +
 			"SET followRQ = ? " + 
@@ -95,10 +96,10 @@ public class TcorsTwitterSurvey {
 		Twitter t = u.getInstance();
 		
 		// sending a message
-		// sendInitialDMs(t);
+		sendInitialDMs(t);
 		
 		// following someone
-		// followUsers(t);
+		followUsers(t);
 		
 		// friend RQs
 		// checkFriendRQs(t);
@@ -174,6 +175,8 @@ public class TcorsTwitterSurvey {
 					// if not, update local status of denial
 					// System.out.println("Can NOT dm:" + user);
 					users.put(user, -1);
+					
+					delay(0, 10);
 				}
 			}
 		}
@@ -409,7 +412,7 @@ public class TcorsTwitterSurvey {
 					e.printStackTrace();
 				}
 			}
-		}
+		} 
 		return success;
 	}
 	
