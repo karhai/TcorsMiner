@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +17,7 @@ import edu.usc.tcors.utils.TcorsMinerUtils;
 import edu.usc.tcors.utils.TcorsTwitterUtils;
 import twitter4j.DirectMessage;
 import twitter4j.Friendship;
+import twitter4j.IDs;
 import twitter4j.Relationship;
 import twitter4j.ResponseList;
 import twitter4j.Twitter;
@@ -52,7 +55,7 @@ public class TcorsTwitterSurvey {
 			"FROM s3_survey " +
 			"WHERE initialDM = 0 " +
 			// "AND (type = \"follower\" OR type = \"OL\")" +
-			"LIMIT 500 ";
+			"LIMIT 1500 ";
 	
 	final static String updateInitialDmUsers = "UPDATE s3_survey " +
 			"SET initialDM = ? " +
@@ -89,37 +92,52 @@ public class TcorsTwitterSurvey {
 			"SET finalDM = ? " +
 			"WHERE userId = ? ";
 	
+	final static String get_not_follower_ids = "SELECT userId " +
+			"FROM s3_survey " +
+			"WHERE followrq = 1 " +
+			"AND friendrq < 0 " +
+			"ORDER BY friendrq ASC " +
+			"LIMIT 10 ";
+	
 	public static void main(String[] args) {
 		setConnection();
 
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Twitter t = u.getInstance();
 		
-		// sending a message
-		sendInitialDMs(t);
+		/*
+		 * TODO: add remove friends
+		 */
 		
-		// following someone
-		followUsers(t);
-		
-		// friend RQs
-		// checkFriendRQs(t);
-		
-		// send final DM
-		// sendFinalDMs(t);
-		
-		// testDM(t);
-		
-		try {
-			System.out.println("Limits:" + t.getRateLimitStatus());
-		} catch (TwitterException e) {
-			e.printStackTrace();
-		}
-		
-		// close connection
-		try {
-			conn.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
+		for (int x = 0; x < 1; x++) {
+			// sending a message
+			// sendInitialDMs(t);
+			
+			// following someone
+			// followUsers(t);
+			
+			// friend RQs
+			checkFriendRQs(t);
+			
+			// send final DM
+			// sendFinalDMs(t);
+			
+			// testDM(t);
+			
+			try {
+				System.out.println("Limits:" + t.getRateLimitStatus());
+			} catch (TwitterException e) {
+				e.printStackTrace();
+			}
+			
+			// close connection
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			System.out.println(ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
 		}
 	}
 	
@@ -189,10 +207,10 @@ public class TcorsTwitterSurvey {
 	
 	/**
 	 * @param result
-	 * @param wait_time
+	 * @param wait_time: seconds to wait (with randomization added later)
 	 * @return
 	 */
-	private static int delay(int result, int wait_time) {
+	public static int delay(int result, int wait_time) {
 		
 		int new_wait = wait_time;
 		
@@ -538,5 +556,46 @@ public class TcorsTwitterSurvey {
 		for (DirectMessage dm : messages) {
 			System.out.println("From:" + dm.getSenderScreenName() + " -- " + dm.getText());
 		}
+	}
+	
+	private static void removeNoFollowBack(Connection conn, Twitter t) {
+				
+		HashMap<String,Integer> ids = new HashMap<String,Integer>();
+		// get list of names from database
+		try {
+			Statement st = conn.createStatement();
+			ResultSet rs = st.executeQuery(get_not_follower_ids);
+			
+			while(rs.next()) {
+				String id = rs.getString("id");
+				ids.put(id, 0);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// remove followers
+		for (String id : ids.keySet()) {
+			try {
+				t.destroyFriendship(id);
+			} catch (TwitterException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private static void removeRandomFollowers(Connection conn, Twitter t) {
+		try {
+			// get list of followers
+			IDs follower_ids = t.getFollowersIDs(account_id);
+
+			// get list of friends
+			IDs friend_ids = t.getFriendsIDs(account_id);
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 }

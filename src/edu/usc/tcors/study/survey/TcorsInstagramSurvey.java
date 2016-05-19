@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +27,7 @@ public class TcorsInstagramSurvey {
 	final static String get_posts = "SELECT id " +
 			"FROM s3_instagram_posts " + 
 			"WHERE comments IS NULL " +
-			"LIMIT 600 ";
+			"LIMIT 500 ";
 	
 	final static String store_comments = "INSERT IGNORE INTO s3_instagram_comments (id,parent_id,username,comment) " +
 			"VALUES (?,?,?,?)";
@@ -42,11 +44,14 @@ public class TcorsInstagramSurvey {
 		Token secretToken = TcorsInstagramUtils.getSecretToken();
 		Instagram instagram = new Instagram(secretToken);
 		
+		// 
 		for (int x = 0; x < 20; x++) {
 			runCommentUpdates(conn, instagram);
 			System.out.println("Loop " + x + ": Pause for 15 minutes");
 			Thread.sleep(15 * 60 * 1000);
 		}
+		
+		System.out.println(ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
 	}
 	
 	private static void runCommentUpdates(Connection conn, Instagram instagram) {

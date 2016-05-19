@@ -36,8 +36,10 @@ import org.jinstagram.entity.users.feed.MediaFeed;
 import org.jinstagram.entity.users.feed.MediaFeedData;
 import org.jinstagram.exceptions.InstagramBadRequestException;
 import org.jinstagram.exceptions.InstagramException;
+import org.jinstagram.exceptions.InstagramRateLimitException;
 
 import edu.usc.tcors.TcorsTwitterStream;
+import edu.usc.tcors.study.survey.TcorsTwitterSurvey;
 
 /*
  * command line execution: java -cp TcorsMiner.jar edu.usc.tcors.utils.TcorsInstagramUtils [users/images] [number of 1000 images] 
@@ -273,6 +275,9 @@ public class TcorsInstagramUtils {
 		try {
 			mediaFeed = instagram.getRecentMediaTags(term, "", "", 33);
 			mediaList = mediaFeed.getData();
+		} catch (InstagramRateLimitException r) {
+			r.printStackTrace();
+			TcorsTwitterSurvey.delay(0, 3600); // wait an hour
 		} catch (InstagramException e) {
 			e.printStackTrace();
 		} catch (NullPointerException n) {
