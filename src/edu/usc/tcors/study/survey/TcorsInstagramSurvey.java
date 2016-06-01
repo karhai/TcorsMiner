@@ -27,7 +27,7 @@ public class TcorsInstagramSurvey {
 	final static String get_posts = "SELECT id " +
 			"FROM s3_instagram_posts " + 
 			"WHERE comments IS NULL " +
-			"LIMIT 500 ";
+			"LIMIT 625 ";
 	
 	final static String store_comments = "INSERT IGNORE INTO s3_instagram_comments (id,parent_id,username,comment) " +
 			"VALUES (?,?,?,?)";
@@ -45,13 +45,12 @@ public class TcorsInstagramSurvey {
 		Instagram instagram = new Instagram(secretToken);
 		
 		// 
-		for (int x = 0; x < 20; x++) {
+		for (int x = 0; x < 432; x++) {
 			runCommentUpdates(conn, instagram);
-			System.out.println("Loop " + x + ": Pause for 15 minutes");
-			Thread.sleep(15 * 60 * 1000);
+			System.out.println("Loop " + x + ": Pause for 7.5 minutes");
+			System.out.println(ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
+			Thread.sleep(450 * 1000); // 7.5 x 6 = 450
 		}
-		
-		System.out.println(ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
 	}
 	
 	private static void runCommentUpdates(Connection conn, Instagram instagram) {
