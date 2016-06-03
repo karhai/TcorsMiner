@@ -18,6 +18,7 @@ import edu.usc.tcors.utils.TcorsTwitterUtils;
 import twitter4j.DirectMessage;
 import twitter4j.Friendship;
 import twitter4j.IDs;
+import twitter4j.Paging;
 import twitter4j.Relationship;
 import twitter4j.ResponseList;
 import twitter4j.Twitter;
@@ -29,7 +30,7 @@ public class TcorsTwitterSurvey {
 	
 	private static Connection conn = null;
 	
-	private final static long account_id = 4750520330L;
+	private final static long account_id = 734880763523407873L;
 	
 	private static String sn = "";
 	
@@ -37,7 +38,7 @@ public class TcorsTwitterSurvey {
 	
 	private final static String dm1 = "Hi ";
 	private final static String dm2 = ",\n\n" +
-			"We’re researchers from the University of Southern California, doing a survey about tobacco and social media. Your input would be very helpful (even if you are not a smoker), and you will get a gift card for your time!\n\n" +
+			"We’re researchers from the University of Southern California, doing a survey about tobacco and social media. Your input would be very helpful (even if you are not a smoker), and you will get an Amazon gift card for your time!\n\n" +
 			"If you live in the United States and are willing to help, click here to get started: ";
 	private final static String dm3 = "\n\n" +
 			"To learn more about us:\n" +
@@ -53,9 +54,9 @@ public class TcorsTwitterSurvey {
 	
 	final static String getInitialDmUsers = "SELECT userId " +
 			"FROM s3_survey " +
-			"WHERE initialDM = 0 " +
-			// "AND (type = \"follower\" OR type = \"OL\")" +
-			"LIMIT 1500 ";
+			"WHERE (initialDM = 0 OR initialDM = -226) " +
+			"AND (type = \"follower\" OR type = \"OL\")" +
+			"LIMIT 20 ";
 	
 	final static String updateInitialDmUsers = "UPDATE s3_survey " +
 			"SET initialDM = ? " +
@@ -65,7 +66,7 @@ public class TcorsTwitterSurvey {
 			"FROM s3_survey " +
 			"WHERE initialDM = -1 " +
 			"AND (followRQ = 0 OR followRQ = -1) " +
-			"LIMIT 500 ";
+			"LIMIT 10 ";
 	
 	final static String updateFollowRqUsers = "UPDATE s3_survey " +
 			"SET followRQ = ? " + 
@@ -105,19 +106,27 @@ public class TcorsTwitterSurvey {
 		TcorsTwitterUtils u = new TcorsTwitterUtils();
 		Twitter t = u.getInstance();
 		
+		int loops = 0;
+		if (args.length > 0) {
+			loops = Integer.parseInt(args[0]);
+		}
+		
 		/*
 		 * TODO: add remove friends
 		 */
 		
-		for (int x = 0; x < 1; x++) {
+		for (int x = 0; x < loops; x++) {
+			
+			System.out.println("Loop:" + x);
+			
 			// sending a message
-			// sendInitialDMs(t);
+			sendInitialDMs(t);
 			
 			// following someone
 			// followUsers(t);
 			
 			// friend RQs
-			checkFriendRQs(t);
+			// checkFriendRQs(t);
 			
 			// send final DM
 			// sendFinalDMs(t);
@@ -130,14 +139,14 @@ public class TcorsTwitterSurvey {
 				e.printStackTrace();
 			}
 			
-			// close connection
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			
 			System.out.println(ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
+		}
+		
+		// close connection
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -191,7 +200,7 @@ public class TcorsTwitterSurvey {
 					
 				} else {
 					// if not, update local status of denial
-					// System.out.println("Can NOT dm:" + user);
+					System.out.println(user + " is locked");
 					users.put(user, -1);
 					
 					delay(0, 10);
@@ -216,6 +225,9 @@ public class TcorsTwitterSurvey {
 		
 		if (result == -226) {
 			new_wait = wait_time * 2;
+			if (new_wait > 3600) {
+				new_wait = 3600;
+			}
 		} else {
 			if (wait_time > 50) {
 				new_wait = wait_time - 10;
@@ -545,17 +557,24 @@ public class TcorsTwitterSurvey {
 	
 	private static void testDM(Twitter t) {
 		List<DirectMessage> messages = null;
+		
+		Paging paging = new Paging(1);
+		int counter = 0;
+		
 		try {
-			messages = t.getDirectMessages();
+			do {
+				messages = t.getSentDirectMessages(paging);
+				// messages = t.getDirectMessages();
+				for (DirectMessage dm : messages) {
+					System.out.println("To:" + dm.getRecipientId());
+					counter++;
+				}
+				paging.setPage(paging.getPage()+1);
+			} while (messages.size() > 0 && paging.getPage() < 10);
 		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		System.out.println("Size:" + messages.size());
-		for (DirectMessage dm : messages) {
-			System.out.println("From:" + dm.getSenderScreenName() + " -- " + dm.getText());
-		}
+		System.out.println("Total messages:" + counter);
 	}
 	
 	private static void removeNoFollowBack(Connection conn, Twitter t) {
