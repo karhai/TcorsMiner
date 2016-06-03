@@ -18,6 +18,7 @@ import org.jinstagram.entity.comments.CommentData;
 import org.jinstagram.entity.comments.MediaCommentsFeed;
 import org.jinstagram.exceptions.InstagramBadRequestException;
 import org.jinstagram.exceptions.InstagramException;
+import org.jinstagram.exceptions.InstagramRateLimitException;
 
 import edu.usc.tcors.utils.TcorsInstagramUtils;
 import edu.usc.tcors.utils.TcorsMinerUtils;
@@ -109,7 +110,10 @@ public class TcorsInstagramSurvey {
 				System.out.println("id:" + id + " with size:" + size);
 				ids.put(id, size);
 				comment_data.put(id, comments);
-			} catch (InstagramException e) {
+			} catch (InstagramRateLimitException r) {
+				r.printStackTrace();
+				TcorsTwitterSurvey.delay(0, 3600); // wait an hour
+			}  catch (InstagramException e) {
 				System.out.println("id:" + id + " NOT FOUND");
 				// e.printStackTrace();
 			}
