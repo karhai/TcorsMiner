@@ -166,7 +166,7 @@ public class TcorsTwitterSurvey {
 		// get list of users from DB
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
 		users = getUsers(getInitialDmUsers,"");
-		int wait_time = 50;
+		int wait_time = 600;
 		
 		for(String user : users.keySet()) {
 		
@@ -223,13 +223,20 @@ public class TcorsTwitterSurvey {
 		
 		int new_wait = wait_time;
 		
+		// if tagged as spam
 		if (result == -226) {
+			
+			// double wait time up until 1 hour
 			new_wait = wait_time * 2;
 			if (new_wait > 3600) {
-				new_wait = 3600;
+				new_wait = 3660;
 			}
+			
+		// if not spam
 		} else {
-			if (wait_time > 50) {
+			
+			// drop wait time by 10% until 10 minutes
+			if (wait_time > 600) {
 				new_wait = wait_time - (int)Math.floor(wait_time * 0.1);
 			}
 		}
