@@ -230,7 +230,7 @@ public class TcorsTwitterSurvey {
 			}
 		} else {
 			if (wait_time > 50) {
-				new_wait = wait_time - 10;
+				new_wait = wait_time - (int)Math.floor(wait_time * 0.1);
 			}
 		}
 		
