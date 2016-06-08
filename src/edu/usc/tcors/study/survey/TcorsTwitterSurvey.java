@@ -166,7 +166,7 @@ public class TcorsTwitterSurvey {
 		// get list of users from DB
 		HashMap<String,Integer> users = new HashMap<String,Integer>();
 		users = getUsers(getInitialDmUsers,"");
-		int wait_time = 600;
+		int wait_time = 900;
 		
 		for(String user : users.keySet()) {
 		
@@ -236,7 +236,7 @@ public class TcorsTwitterSurvey {
 		} else {
 			
 			// drop wait time by 10% until 10 minutes
-			if (wait_time > 600) {
+			if (wait_time > 900) {
 				new_wait = wait_time - (int)Math.floor(wait_time * 0.1);
 			}
 		}
