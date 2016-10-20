@@ -94,7 +94,7 @@ sb140
 sb 140
 sb24
 sb 24
-# swisher terms -- added 6/16/2016
+# swisher terms -- added 6/16/2015
 cherry tip cigarillos
 mini-cigarillos
 tip cigarillos
