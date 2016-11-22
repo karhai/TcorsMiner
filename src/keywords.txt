@@ -168,3 +168,6 @@ sbx27
 sbx25
 FDAdeeming
 FDAtobacco
+# new props
+prop56
+prop64
