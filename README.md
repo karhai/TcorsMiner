@@ -8,6 +8,8 @@ Generic utility to parse social media data for network analyses. Includes:
 
 This is custom software that will collect live Twitter and Instagram data based on a set of keywords. Optionally, if you buy data from Gnip, there are tools included that can also parse that data. Primarily, the purpose of the data collection was to allow for large scale network analyses of the Twitter and Instagram networks. As such, some data is included which might seem unnecessary, while other data that seem important might be ignored.
 
+Seach term info: Twitter Streaming API takes each term(s) as inclusive AND but not in order. It is case-insensitive, and each term will be looked for in the text (tweet), expanded/displayed URL, screen name (@), and hashtag (#). Exact string will be matched, but symbols are ignored. See https://dev.twitter.com/streaming/overview/request-parameters#follow for more info.
+
 There are also some custom utilities built for specific purposes.
 
 As this software was written for a specific purpose, usage requires following a pre-existing outline.
