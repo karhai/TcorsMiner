@@ -171,3 +171,8 @@ FDAtobacco
 # new props
 prop56
 prop64
+# new terms -- added 4/10/2017
+juul
+smokeless
+ryo
+rollyourown
