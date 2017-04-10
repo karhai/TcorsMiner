@@ -16,6 +16,9 @@ import org.jinstagram.Instagram;
 import org.jinstagram.auth.model.Token;
 import org.jinstagram.entity.comments.CommentData;
 import org.jinstagram.entity.comments.MediaCommentsFeed;
+import org.jinstagram.entity.tags.TagMediaFeed;
+import org.jinstagram.entity.users.feed.MediaFeed;
+import org.jinstagram.entity.users.feed.MediaFeedData;
 import org.jinstagram.exceptions.InstagramBadRequestException;
 import org.jinstagram.exceptions.InstagramException;
 import org.jinstagram.exceptions.InstagramRateLimitException;
@@ -46,12 +49,17 @@ public class TcorsInstagramSurvey {
 		Instagram instagram = new Instagram(secretToken);
 		
 		// 
-		for (int x = 0; x < 100; x++) {
-			runCommentUpdates(conn, instagram);
-			System.out.println("Loop " + x + ": Pause for 15 minutes");
-			System.out.println(ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
-			Thread.sleep(15 * 60 * 1000);
-		}
+//		for (int x = 0; x < 100; x++) {
+//			runCommentUpdates(conn, instagram);
+//			System.out.println("Loop " + x + ": Pause for 15 minutes");
+//			System.out.println(ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
+//			Thread.sleep(15 * 60 * 1000);
+//		}
+		
+		String tagName = "snow";
+		TagMediaFeed mediaFeed = instagram.getRecentMediaTags(tagName);
+
+		List<MediaFeedData> mediaFeeds = mediaFeed.getData();
 	}
 	
 	private static void runCommentUpdates(Connection conn, Instagram instagram) {

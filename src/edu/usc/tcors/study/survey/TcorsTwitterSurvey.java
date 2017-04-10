@@ -55,7 +55,7 @@ public class TcorsTwitterSurvey {
 	final static String getInitialDmUsers = "SELECT userId " +
 			"FROM s3_survey " +
 			"WHERE (initialDM = 0 OR initialDM = -226) " +
-			"AND (type = \"follower\" OR type = \"OL\")" +
+			// "AND (type = \"follower\" OR type = \"OL\")" +
 			"LIMIT 20 ";
 	
 	final static String updateInitialDmUsers = "UPDATE s3_survey " +

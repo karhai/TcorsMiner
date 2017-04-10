@@ -66,7 +66,7 @@ public class TcorsTwitterUtils {
 //		}
 		
 		try {
-			u.getRandomTwitterUsers(2000);
+			u.getRandomTwitterUsers(10000);
 		} catch (TwitterException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
