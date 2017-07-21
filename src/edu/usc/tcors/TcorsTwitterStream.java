@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import edu.usc.tcors.utils.TcorsMinerUtils;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.List;
 import twitter4j.FilterQuery;
 import twitter4j.Place;
 import twitter4j.StallWarning;
@@ -110,7 +113,8 @@ public class TcorsTwitterStream {
 			}
 		};
 		
-		String keywords[] = loadSearchTerms();
+                // String keywords[] = loadSearchTerms();
+		String keywords[] = loadSearchTerms(conn);
 		
 		FilterQuery filter = new FilterQuery();
 		
@@ -119,7 +123,8 @@ public class TcorsTwitterStream {
 		twitterStream.addListener(listener);
 		twitterStream.filter(filter);
 	}
-	
+
+        /*	
 	private String[] loadSearchTerms() throws IOException {
 		ArrayList<String> ret = new ArrayList<String>();
 		
@@ -135,7 +140,45 @@ public class TcorsTwitterStream {
 		
 		return ret.toArray(new String[ret.size()]);
 	}
+        */
+        
+	// Read the keywords from the 'twitter_keywords' table in the database BEGIN
+	// https://docs.oracle.com/javase/tutorial/jdbc/basics/processingsqlstatements.html
+	public String[] loadSearchTerms(Connection conn) {
+	    Statement stmt = null;
+            ResultSet rs = null;
+	    List<String> results = new ArrayList<String>();
+	    try {
+	        String baseQuery = "SELECT keyword FROM twitter_keywords where enabled=1";
+	        stmt = conn.createStatement();
+                rs = stmt.executeQuery(baseQuery);
+	        while(rs.next()) {
+	            results.add(rs.getString("keyword"));
+	        }
+	    } catch (SQLException e) {
+	        //handle your exception
+	        e.printStackTrace(System.out);
+	    } finally {
+	        closeResource(rs);
+	        closeResource(conn);
+	    }
+	    return results.toArray(new String[results.size()]);
+	}
 
+	//both Connection and ResultSet interfaces extends from AutoCloseable interface
+	public void closeResource(AutoCloseable ac) {
+	    try {
+	        if (ac != null) {
+	            ac.close();
+	        }
+	    } catch (Exception e) {
+	        //handle this exception as well...
+	    }
+	}	
+	
+	// Read the keywords from the 'twitter_keywords' table in the database END
+        
+        
 	private void storeTwitterData(Connection conn, Status status) {
 		try {
 			storeTweetData(conn, status);
