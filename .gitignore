@@ -1,0 +1,12 @@
+configuration.properties
+gnip_configuration.properties
+jInstagram.properties
+twitter4j.properties
+/.DS_Store
+# /.gitignore
+twitter4j.properties.old
+dist/
+build/
+exception.txt
+private.properties
+nbproject/private/
