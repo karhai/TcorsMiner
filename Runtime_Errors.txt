@@ -1,0 +1,46 @@
+2017-11-08 22:31
+----------------
+
+The executed line was
+INSERT INTO tweets (id, createdAt, text, userId, isRetweet, latitude, longitude, place_country, place_name, place_type)
+
+Stored profile S2abcY
+com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException: Dupl
+icate entry '928509466517020673' for key 'PRIMARY'
+        at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInsta
+nce0(Native Method)
+        at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInsta
+nce(Unknown Source)
+        at java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newI
+nstance(Unknown Source)
+        at java.base/java.lang.reflect.Constructor.newInstance(Unknown Source)
+        at com.mysql.jdbc.Util.handleNewInstance(Util.java:409)
+        at com.mysql.jdbc.Util.getInstance(Util.java:384)
+        at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:1039)
+        at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:4232)
+        at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:4164)
+        at com.mysql.jdbc.MysqlIO.sendCommand(MysqlIO.java:2615)
+        at com.mysql.jdbc.MysqlIO.sqlQueryDirect(MysqlIO.java:2776)
+        at com.mysql.jdbc.ConnectionImpl.execSQL(ConnectionImpl.java:2838)
+        at com.mysql.jdbc.PreparedStatement.executeInternal(PreparedStatement.ja
+va:2082)
+        at com.mysql.jdbc.PreparedStatement.execute(PreparedStatement.java:1307)
+
+        at edu.usc.tcors.TcorsTwitterStream.storeTweetData(TcorsTwitterStream.ja
+va:264)
+        at edu.usc.tcors.TcorsTwitterStream.storeTwitterData(TcorsTwitterStream.
+java:186)
+        at edu.usc.tcors.TcorsTwitterStream.access$000(TcorsTwitterStream.java:4
+5)
+        at edu.usc.tcors.TcorsTwitterStream$1.onStatus(TcorsTwitterStream.java:6
+8)
+        at twitter4j.StatusStreamImpl.onStatus(StatusStreamImpl.java:74)
+        at twitter4j.StatusStreamBase$1.run(StatusStreamBase.java:104)
+        at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown S
+ource)
+        at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown
+Source)
+        at java.base/java.lang.Thread.run(Unknown Source)
+Stored profile omgeteresaa
+
+===========================================================================================

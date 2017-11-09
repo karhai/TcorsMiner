@@ -160,7 +160,9 @@ public class TcorsTwitterStream {
 	        e.printStackTrace(System.out);
 	    } finally {
 	        closeResource(rs);
-	        closeResource(conn);
+
+                // Do not close the connection
+	        // closeResource(conn);
 	    }
 	    return results.toArray(new String[results.size()]);
 	}
