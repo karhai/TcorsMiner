@@ -183,3 +183,18 @@ VALUES
 
 select * from twitter_keywords;
 /*drop table twitter_keywords;*/
+
+-- Insert the keywords
+INSERT INTO `tcorstwitter`.`twitter_keywords`
+(`keyword`,
+`enabled`,
+`add_notes`,
+`creation_date`,
+`created_by`)
+VALUES
+('7000chemicals', 1, 'From the current FDA campaigns', Now(), '0')
+,('therealcost', 1, 'From the current FDA campaigns', Now(), '0')
+,('tobaccofreelife', 1, 'From the current FDA campaigns', Now(), '0')
+,('freshevents', 1, 'From the current FDA campaigns', Now(), '0')
+,('everytrycounts', 1, 'New FDA campaign that launches in January 2018', Now(), '0')
+
