@@ -4,7 +4,7 @@ jInstagram.properties
 twitter4j.properties
 /.DS_Store
 # /.gitignore
-twitter4j.properties.old
+twitter4j.properties.*
 dist/
 build/
 exception.txt

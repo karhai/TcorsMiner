@@ -310,7 +310,12 @@ public class TcorsTwitterStream {
 	 * TODO: refactor
 	 */
 	
-	private ConfigurationBuilder getConf() {
+        // Downloaded version 4.0.6 of twitter4j-core-4.0.6.jar and twitter4j-stream-4.0.6.jar from
+        // http://search.maven.org/        
+        // Added twitterConf.setTweetModeExtended(true); to handle 280 character tweets
+        // https://nmatpt.com/blog/2018/01/06/twitter4j-extended-mode
+
+        private ConfigurationBuilder getConf() {
 		Properties prop = new Properties();
 		try {
 			InputStream in = TcorsTwitterStream.class.getClassLoader().getResourceAsStream("twitter4j.properties");
@@ -326,6 +331,8 @@ public class TcorsTwitterStream {
 		twitterConf.setOAuthConsumerKey(prop.getProperty("oauth.consumerKey"));
 		twitterConf.setOAuthConsumerSecret(prop.getProperty("oauth.consumerSecret"));
 		twitterConf.setJSONStoreEnabled(true);
+                // Handle longer than 140 character tweets., Requires version 4.0.6 of twitter4j-core-4.0.6.jar and twitter4j-stream-4.0.6.jar
+                twitterConf.setTweetModeExtended(true);
 		
 		return twitterConf;
 	}
