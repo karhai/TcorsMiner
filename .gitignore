@@ -10,3 +10,4 @@ build/
 exception.txt
 private.properties
 nbproject/private/
+*.jar

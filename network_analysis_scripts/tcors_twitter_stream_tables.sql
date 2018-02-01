@@ -1,3 +1,13 @@
+-- ==========================================================================================================================================
+-- ==========================================================================================================================================
+
+/*
+* Dev			TcorsTwitter	2017-07-20
+* Test			TcorsTwitter	2017-07-20
+* Prod			TcorsTwitter	2017-07-20
+*/
+
+
 -- create database TcorsTwitter
 use TcorsTwitter;
 
@@ -196,5 +206,24 @@ VALUES
 ,('therealcost', 1, 'From the current FDA campaigns', Now(), '0')
 ,('tobaccofreelife', 1, 'From the current FDA campaigns', Now(), '0')
 ,('freshevents', 1, 'From the current FDA campaigns', Now(), '0')
-,('everytrycounts', 1, 'New FDA campaign that launches in January 2018', Now(), '0')
+,('everytrycounts', 1, 'New FDA campaign that launches in January 2018', Now(), '0');
 
+
+-- ==========================================================================================================================================
+-- ==========================================================================================================================================
+
+/*
+* Dev			TcorsTwitter	2018-01-31
+* Test			TcorsTwitter	2018-01-31
+* Prod			TcorsTwitter	2018-01-31 Ryan already extended the text column.
+*/
+
+-- Extend the text column size to store 280 character tweets
+
+USE tcorstwitter;
+
+select text, max(length(text)) from tweets;
+
+USE tcorstwitter;
+
+ALTER TABLE tweets MODIFY text varchar(300);
