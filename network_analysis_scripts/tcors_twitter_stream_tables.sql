@@ -219,6 +219,7 @@ VALUES
 */
 
 -- Extend the text column size to store 280 character tweets
+-- Some texts are 301 char long, extend it to 350
 
 USE tcorstwitter;
 
@@ -226,4 +227,4 @@ select text, max(length(text)) from tweets;
 
 USE tcorstwitter;
 
-ALTER TABLE tweets MODIFY text varchar(300);
+ALTER TABLE tweets MODIFY text varchar(350);

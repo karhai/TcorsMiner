@@ -446,7 +446,7 @@ public class TcorsTwitterUtils {
 			ps = conn.prepareStatement(sql);
 			ps.setString(1, Long.toString(status.getId()));
 			ps.setTimestamp(2, new Timestamp(status.getCreatedAt().getTime()));
-			ps.setString(3, status.getText());
+			ps.setString(3, status.getRetweetedStatus().getText());
 			ps.setString(4, String.valueOf(status.getUser().getId()));
 			ps.setBoolean(5, status.isRetweet());
 			if (status.getGeoLocation() != null) {
