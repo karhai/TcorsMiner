@@ -213,9 +213,9 @@ VALUES
 -- ==========================================================================================================================================
 
 /*
-* Dev			TcorsTwitter	2018-01-31
-* Test			TcorsTwitter	2018-01-31
-* Prod			TcorsTwitter	2018-01-31 Ryan already extended the text column.
+* Dev			TcorsTwitter	2018-02-01
+* Test			TcorsTwitter	2018-02-01
+* Prod			TcorsTwitter	2018-02-01 Ryan already extended the text column to 300
 */
 
 -- Extend the text column size to store 280 character tweets
@@ -228,3 +228,37 @@ select text, max(length(text)) from tweets;
 USE tcorstwitter;
 
 ALTER TABLE tweets MODIFY text varchar(350);
+
+-- ==========================================================================================================================================
+-- ==========================================================================================================================================
+
+/*
+* Dev			TcorsTwitter	2018-02-04
+* Test			TcorsTwitter	2018-02-04
+* Prod			TcorsTwitter	2018-02-05
+*/
+
+-- I have found 688 long tweet text:
+/*
+RT @fhay_cotton_h: ใครสายกุ้งต้องมาโดนร้านนี้นะ Vapor ในหมู่บ้านนิชดา กุ้งเผาตัวโตๆ มันเยิ้มๆ เสิร์ฟพร้อมข้าวสวยอุ่น ตัดมันกุ้ง และน้ำปลาราดคือฟิน รสชาติน้ำจิ้มซีฟู้ดก็กลมกล่อม แถมแกะเนื้อก้ามกุ้งให้อีกด้วย ราคาประมาณ 200/1ขีด ในภาพ 5 ขีดฮะ #อร่อยไปแดก https://t.co/p6WOAFXIcG
+*/
+
+-- 463 long text
+/*
+Storing tweet
+id = 960319102089768960 length = 18
+createdAt = 2018-02-04 17:08:10.0
+originalText =  length = 0
+this_tweets_text = @AwkwardBunny26 @TrevorO97466582 @BeautifulDayMom @RiggyWoo @Eddiebr88701857 @KristinFaller11 @ZenitForward @axlsnakeoil @cavanagh_kyle @FAlanSlack4lyfe @RealAmBEAR @JesTheBelle @hikingwithjulie @DolevBroughton @CorneliusGegan @bunnyknows @ZeithBear @Koncept187 @vexed_llama My bro and I ate some when they were really strong and smoked a blunt before the avengers movie. About 20 min we started to fall asleep haha, left the movie and took a six hour midday nap. length = 463
+textToStore = @AwkwardBunny26 @TrevorO97466582 @BeautifulDayMom @RiggyWoo @Eddiebr88701857 @KristinFaller11 @ZenitForward @axlsnakeoil @cavanagh_kyle @FAlanSlack4lyfe @RealAmBEAR @JesTheBelle @hikingwithjulie @DolevBroughton @CorneliusGegan @bunnyknows @ZeithBear @Koncept187 @vexed_llama My bro and I ate some when they were really strong and smoked a blunt before the avengers movie. About 20 min we started to fall asleep haha, left the movie and took a six hour midday nap. length = 463
+userId = 954552465978023936 length = 18
+isRetweet = false
+latitude = 0.0
+longitude = 0.0
+place_country =  length = 0
+place_name =  length = 0
+place_type =  length = 0
+*/
+
+USE tcorstwitter;
+ALTER TABLE tweets MODIFY text varchar(1024);

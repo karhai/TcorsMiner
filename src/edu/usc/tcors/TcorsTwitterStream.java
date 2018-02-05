@@ -233,7 +233,9 @@ public class TcorsTwitterStream {
 
                 String id;
                 Timestamp createdAt;
-                String text;
+                String thisTweetsText = "";
+                String originalText = "";
+                String textToStore = "";
                 String userId;
                 Boolean isRetweet;
                 Double latitude = 0d;
@@ -246,9 +248,28 @@ public class TcorsTwitterStream {
 
                         id = Long.toString(status.getId());
                         createdAt = new Timestamp(status.getCreatedAt().getTime());
-                        text = status.getRetweetedStatus().getText();
-                        userId = String.valueOf(status.getUser().getId());
                         isRetweet = status.isRetweet();
+                        thisTweetsText = status.getText();
+
+                        if (isRetweet) {
+                            //  This is a retweet,  get the original text
+                            originalText = status.getRetweetedStatus().getText();
+
+                            // Get the beginning of the retweet to get the original user
+                            String retweetParts[] = thisTweetsText.split(":");
+                            if (null != retweetParts && null != retweetParts[0]){
+                                
+                                // Prepend the original text with the beginning of the retweet
+                                textToStore = retweetParts[0] + ": " + originalText;
+                            }
+
+                        } else {
+                            // Not a retweet, save the text as-is
+                            textToStore = thisTweetsText;
+                        }
+
+                        userId = String.valueOf(status.getUser().getId());
+
                         if (status.getGeoLocation() != null) {
                             latitude = status.getGeoLocation().getLatitude();
                             longitude = status.getGeoLocation().getLongitude();
@@ -266,10 +287,14 @@ public class TcorsTwitterStream {
                             place_type = "";
                         }
 
+                        // Display the Tweet info on the console
+                        System.out.println("");
                         System.out.println("Storing tweet");
                         System.out.println("id = " + id + " length = " + id.length());
                         System.out.println("createdAt = " + createdAt);
-                        System.out.println("text = " + text + " length = " + text.length());
+                        System.out.println("originalText = " + originalText + " length = " + originalText.length());
+                        System.out.println("this_tweets_text = " + thisTweetsText + " length = " + thisTweetsText.length());
+                        System.out.println("textToStore = " + textToStore + " length = " + textToStore.length());
                         System.out.println("userId = " + userId + " length = " + userId.length());
                         System.out.println("isRetweet = " + isRetweet);
                         System.out.println("latitude = " + latitude);
@@ -278,10 +303,11 @@ public class TcorsTwitterStream {
                         System.out.println("place_name = " + place_name + " length = " + place_name.length());
                         System.out.println("place_type = " + place_type + " length = " + place_type.length());
 
+                        // Save the tweet in the database
                         ps = conn.prepareStatement(sql);
                         ps.setString(1, id);
                         ps.setTimestamp(2, createdAt);
-                        ps.setString(3, text);
+                        ps.setString(3, textToStore);
                         ps.setString(4, userId);
                         ps.setBoolean(5, isRetweet);
                         ps.setDouble(6, latitude);
@@ -327,7 +353,6 @@ public class TcorsTwitterStream {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
-                        System.out.println("");
 			ps.close();
 		}
 	}
