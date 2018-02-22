@@ -262,3 +262,31 @@ place_type =  length = 0
 
 USE tcorstwitter;
 ALTER TABLE tweets MODIFY text varchar(1024);
+
+
+-- ==========================================================================================================================================
+-- ==========================================================================================================================================
+
+/*
+* Dev			TcorsTwitter	2018-02-21
+* Test			TcorsTwitter	not deployed
+* Prod			TcorsTwitter	not deployed
+*/
+
+
+
+-- Add enabled info to the `tcorstwitter`.`twitter_keywords` table
+
+USE tcorstwitter;
+
+ALTER TABLE twitter_keywords ADD enabled_notes VARCHAR(500) NULL;
+ALTER TABLE twitter_keywords ADD enabled_date DATETIME NULL;
+ALTER TABLE twitter_keywords ADD enabled_by VARCHAR(128) NULL;
+
+ALTER TABLE twitter_keywords ADD edited_notes VARCHAR(500) NULL;
+ALTER TABLE twitter_keywords ADD edited_date DATETIME NULL;
+ALTER TABLE twitter_keywords ADD edited_by VARCHAR(128) NULL;
+
+ALTER TABLE twitter_keywords ADD last_notes VARCHAR(500) NULL;
+ALTER TABLE twitter_keywords ADD last_date DATETIME NULL;
+ALTER TABLE twitter_keywords ADD last_by VARCHAR(128) NULL;
