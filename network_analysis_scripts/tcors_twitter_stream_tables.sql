@@ -279,14 +279,52 @@ ALTER TABLE tweets MODIFY text varchar(1024);
 
 USE tcorstwitter;
 
-ALTER TABLE twitter_keywords ADD enabled_notes VARCHAR(500) NULL;
-ALTER TABLE twitter_keywords ADD enabled_date DATETIME NULL;
-ALTER TABLE twitter_keywords ADD enabled_by VARCHAR(128) NULL;
+-- Delete unused columns
+ALTER TABLE twitter_keywords DROP disabled_notes;
+ALTER TABLE twitter_keywords DROP disabled_date;
+ALTER TABLE twitter_keywords DROP disabled_by;
 
-ALTER TABLE twitter_keywords ADD edited_notes VARCHAR(500) NULL;
-ALTER TABLE twitter_keywords ADD edited_date DATETIME NULL;
-ALTER TABLE twitter_keywords ADD edited_by VARCHAR(128) NULL;
+-- Add new columns
+ALTER TABLE twitter_keywords ADD notes VARCHAR(2048) NULL;
+ALTER TABLE twitter_keywords ADD change_date DATETIME NULL;
+ALTER TABLE twitter_keywords ADD changed_by VARCHAR(128) NULL;
+ALTER TABLE twitter_keywords ADD change_notes VARCHAR(500) NULL;
+ALTER TABLE twitter_keywords ADD change_action VARCHAR(50) NULL;
 
-ALTER TABLE twitter_keywords ADD last_notes VARCHAR(500) NULL;
-ALTER TABLE twitter_keywords ADD last_date DATETIME NULL;
-ALTER TABLE twitter_keywords ADD last_by VARCHAR(128) NULL;
+-- Copy the add notes to the notes column
+UPDATE twitter_keywords SET notes = add_notes WHERE 0 < keyword_id; 
+
+SELECT * FROM twitter_keywords;
+
+-- Populate the creation date
+USE tcorstwitter;
+
+START TRANSACTION;
+	UPDATE twitter_keywords SET creation_date = '2015-03-24' WHERE keyword_id > 0 AND add_notes like '%3/24/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-04-19' WHERE keyword_id > 0 AND add_notes like '%4/19/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-04-30' WHERE keyword_id > 0 AND add_notes like '%4/30/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-05-29' WHERE keyword_id > 0 AND add_notes like '%5/29/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-05-30' WHERE keyword_id > 0 AND add_notes like '%5/30/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-06-16' WHERE keyword_id > 0 AND add_notes like '%6/16/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-06-16' WHERE keyword_id > 0 AND keyword in ('swisher blk','swisher sweets');
+	UPDATE twitter_keywords SET creation_date = '2015-06-19' WHERE keyword_id > 0 AND add_notes like '%6/19/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-07-13' WHERE keyword_id > 0 AND add_notes like '%7/13/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-10-08' WHERE keyword_id > 0 AND add_notes like '%10/8/2015';
+	UPDATE twitter_keywords SET creation_date = '2015-10-14' WHERE keyword_id > 0 AND add_notes like '%10/14/2015';
+	UPDATE twitter_keywords SET creation_date = '2016-01-26' WHERE keyword_id > 0 AND add_notes like '%1/26/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-01-27' WHERE keyword_id > 0 AND add_notes like '%1/27/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-02-18' WHERE keyword_id > 0 AND add_notes like '%2/18/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-03-05' WHERE keyword_id > 0 AND add_notes like '%3/5/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-04-01' WHERE keyword_id > 0 AND add_notes like '%4/1/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-04-04' WHERE keyword_id > 0 AND add_notes like '%4/4/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-04-11' WHERE keyword_id > 0 AND add_notes like '%4/11/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-04-26' WHERE keyword_id > 0 AND add_notes like '%4/26/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-05-02' WHERE keyword_id > 0 AND add_notes like '%5/2/2016';
+	UPDATE twitter_keywords SET creation_date = '2016-05-06' WHERE keyword_id > 0 AND add_notes like '%5/6/2016';
+	UPDATE twitter_keywords SET creation_date = '2017-04-10' WHERE keyword_id > 0 AND add_notes like '%4/10/2017';
+	UPDATE twitter_keywords SET creation_date = '2017-05-11' WHERE keyword_id > 0 AND add_notes like '%5/11/2017%';
+	UPDATE twitter_keywords SET creation_date = '2017-11-09' WHERE keyword_id > 0 AND add_notes like '%11/09/2017';
+
+	SELECT * FROM twitter_keywords;
+-- ROLLBACK;
+-- COMMIT;
