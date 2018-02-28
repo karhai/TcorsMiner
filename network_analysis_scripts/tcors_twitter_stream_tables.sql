@@ -268,9 +268,9 @@ ALTER TABLE tweets MODIFY text varchar(1024);
 -- ==========================================================================================================================================
 
 /*
-* Dev			TcorsTwitter	2018-02-21
-* Test			TcorsTwitter	not deployed
-* Prod			TcorsTwitter	not deployed
+* Dev			TcorsTwitter	Deployed 2018-02-21
+* Test			TcorsTwitter	Deployed 2018-02-27
+* Prod			TcorsTwitter	Deployed 2018-02-27
 */
 
 
@@ -288,8 +288,9 @@ ALTER TABLE twitter_keywords DROP disabled_by;
 ALTER TABLE twitter_keywords ADD notes VARCHAR(2048) NULL;
 ALTER TABLE twitter_keywords ADD change_date DATETIME NULL;
 ALTER TABLE twitter_keywords ADD changed_by VARCHAR(128) NULL;
-ALTER TABLE twitter_keywords ADD change_notes VARCHAR(500) NULL;
 ALTER TABLE twitter_keywords ADD change_action VARCHAR(50) NULL;
+ALTER TABLE twitter_keywords ADD change_notes VARCHAR(500) NULL;
+
 
 -- Copy the add notes to the notes column
 UPDATE twitter_keywords SET notes = add_notes WHERE 0 < keyword_id; 
