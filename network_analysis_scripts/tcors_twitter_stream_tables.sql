@@ -329,3 +329,25 @@ START TRANSACTION;
 	SELECT * FROM twitter_keywords;
 -- ROLLBACK;
 -- COMMIT;
+
+-- ==========================================================================================================================================
+-- ==========================================================================================================================================
+
+/*
+* Dev			TcorsTwitter	Deployed 2018-03-04
+* Test			TcorsTwitter	Deployed 2018-03-04
+* Prod			TcorsTwitter	Deployed 2018-03-04
+*/
+
+-- Add indexes to the twitter_profile table
+
+USE tcorstwitter;
+CREATE INDEX `idx_twitter_profiles_statusesCount` ON `twitter_profiles` (`statusesCount`);
+CREATE INDEX `idx_twitter_profiles_followersCount` ON `twitter_profiles` (`followersCount`);
+CREATE INDEX `idx_twitter_profiles_friendsCount` ON `twitter_profiles` (`friendsCount`);
+
+use tcorstwitter;
+select * from tweets order by createdAt desc limit 5;
+select count(twitter_profilestwitter_profiles1) from tweets;
+select count(*) from twitter_profiles;
+select * from twitter_profiles order by statusesCount desc limit 5;
