@@ -351,3 +351,163 @@ select * from tweets order by createdAt desc limit 5;
 select count(twitter_profilestwitter_profiles1) from tweets;
 select count(*) from twitter_profiles;
 select * from twitter_profiles order by statusesCount desc limit 5;
+
+-- ==========================================================================================================================================
+-- ==========================================================================================================================================
+
+-- NOT NEEDED
+-- The Twitter stream runs in a loop, cannot check for tasks to execute
+
+/*
+* Dev			TcorsTwitter	Deployed 2018-03-04
+* Test			TcorsTwitter	Deployed 2018-03-04
+* Prod			TcorsTwitter	Deployed 2018-03-04
+*/
+
+/*
+-- Add task tableto control the Java application from the web application
+
+USE tcorstwitter;
+
+CREATE TABLE `tcorstwitter`.`valid_task_type` (
+  `task_type_id` INT NOT NULL,
+  `name` VARCHAR(45) NULL,
+  PRIMARY KEY (`task_type_id`));
+
+CREATE TABLE `tcorstwitter`.`task` (
+  `task_id` INT NOT NULL,
+  `task_type_id` INT NULL,
+  `request_date` DATETIME NULL,
+  `requested_by` VARCHAR(45) NULL,
+  `execute_after` DATETIME NULL,
+  `completed_date` DATETIME NULL,
+  PRIMARY KEY (`task_id`));
+
+ALTER TABLE `tcorstwitter`.`task` 
+ADD INDEX `task_type_idx` (`task_type_id` ASC);
+ALTER TABLE `tcorstwitter`.`task` 
+ADD CONSTRAINT `task_type`
+  FOREIGN KEY (`task_type_id`)
+  REFERENCES `tcorstwitter`.`valid_task_type` (`task_type_id`)
+  ON DELETE NO ACTION
+  ON UPDATE NO ACTION;
+
+*/
+
+-- Add After Insert trigger to save the latest tweets in a reporting table for fast streaming of the last tweets
+
+-- Create the tweets reporting table
+
+use tcorstwitter;
+
+-- DROP TABLE reporting_tweets;
+
+CREATE TABLE `reporting_tweets` (
+  `id` varchar(190) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `createdAt` datetime DEFAULT NULL,
+  `text` varchar(1024) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `userId` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `isRetweet` tinyint(1) DEFAULT NULL,
+  `latitude` double DEFAULT NULL,
+  `longitude` double DEFAULT NULL,
+  `place_country` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `place_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `place_type` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- -------------------------
+
+
+-- DROP TRIGGER tweets_after_insert;
+
+
+use tcorstwitter;
+
+-- Use the DELIMITER to allow the execution of the inner and outer commands with "under cursor"
+DELIMITER //
+
+CREATE TRIGGER tweets_after_insert
+AFTER INSERT
+   ON tweets FOR EACH ROW
+
+BEGIN
+
+INSERT INTO `tcorstwitter`.`reporting_tweets`
+(`id`,
+`createdAt`,
+`text`,
+`userId`,
+`isRetweet`,
+`latitude`,
+`longitude`,
+`place_country`,
+`place_name`,
+`place_type`)
+VALUES
+(NEW.id,
+NEW.createdAt,
+NEW.text,
+NEW.userId,
+NEW.isRetweet,
+NEW.latitude,
+NEW.longitude,
+NEW.place_country,
+NEW.place_name,
+NEW.place_type);
+
+-- Delete old rows from the reporting table, keep only the last 100
+-- https://stackoverflow.com/questions/578867/sql-query-delete-all-records-from-the-table-except-latest-n/8303440#8303440
+DELETE FROM `reporting_tweets`
+  WHERE id <= (
+    SELECT id
+    FROM (
+      SELECT id
+      FROM `reporting_tweets`
+      ORDER BY id DESC
+      LIMIT 1 OFFSET 100 -- keep this many records
+    ) my_alias
+  );
+
+END; //
+
+DELIMITER ;
+
+
+-- ===================================================================
+-- Testing the trigger
+
+DELIMITER //
+
+SET @mynum = '0032';
+
+INSERT INTO `tcorstwitter`.`tweets`
+(`id`,
+`createdAt`,
+`text`,
+`userId`,
+`isRetweet`,
+`latitude`,
+`longitude`,
+`place_country`,
+`place_name`,
+`place_type`)
+VALUES
+(CONCAT('id',@mynum),
+SYSDATE(),
+CONCAT('text ',@mynum),
+CONCAT('user id ',@mynum),
+0,
+0,
+0,
+CONCAT('country ',@mynum),
+CONCAT('place ',@mynum),
+CONCAT('place type ',@mynum));
+
+ //
+
+DELIMITER ;
+
+select * from tweets order by createdAt desc limit 30;
+select * from reporting_tweets order by createdAt desc;
