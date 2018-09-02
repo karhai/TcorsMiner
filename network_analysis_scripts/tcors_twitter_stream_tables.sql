@@ -434,29 +434,35 @@ AFTER INSERT
 
 BEGIN
 
-INSERT INTO `tcorstwitter`.`reporting_tweets`
-(`id`,
-`createdAt`,
-`text`,
-`userId`,
-`isRetweet`,
-`latitude`,
-`longitude`,
-`place_country`,
-`place_name`,
-`place_type`)
-VALUES
-(NEW.id,
-NEW.createdAt,
-NEW.text,
-NEW.userId,
-NEW.isRetweet,
-NEW.latitude,
-NEW.longitude,
-NEW.place_country,
-NEW.place_name,
-NEW.place_type);
+set @max_row_count = 10;
+select count(0) into @reporting_tweets_count  from reporting_tweets;
 
+IF @reporting_tweets_count < @max_row_count THEN
+	INSERT INTO `tcorstwitter`.`reporting_tweets`
+	(`id`,
+	`createdAt`,
+	`text`,
+	`userId`,
+	`isRetweet`,
+	`latitude`,
+	`longitude`,
+	`place_country`,
+	`place_name`,
+	`place_type`)
+	VALUES
+	(NEW.id,
+	NEW.createdAt,
+	NEW.text,
+	NEW.userId,
+	NEW.isRetweet,
+	NEW.latitude,
+	NEW.longitude,
+	NEW.place_country,
+	NEW.place_name,
+	NEW.place_type);
+
+END IF;
+/*
 -- Delete old rows from the reporting table, keep only the last 100
 -- https://stackoverflow.com/questions/578867/sql-query-delete-all-records-from-the-table-except-latest-n/8303440#8303440
 DELETE FROM `reporting_tweets`
@@ -469,7 +475,7 @@ DELETE FROM `reporting_tweets`
       LIMIT 1 OFFSET 100 -- keep this many records
     ) my_alias
   );
-
+*/
 END; //
 
 DELIMITER ;
@@ -480,7 +486,7 @@ DELIMITER ;
 
 DELIMITER //
 
-SET @mynum = '0032';
+SET @mynum = '0054';
 
 INSERT INTO `tcorstwitter`.`tweets`
 (`id`,
@@ -511,3 +517,9 @@ DELIMITER ;
 
 select * from tweets order by createdAt desc limit 30;
 select * from reporting_tweets order by createdAt desc;
+-- delete from reporting_tweets;
+
+set @max_row_count = 20;
+select @reporting_tweets_count := count(0) from reporting_tweets;
+select @reporting_tweets_count;
+
